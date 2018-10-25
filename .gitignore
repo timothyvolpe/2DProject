@@ -18,6 +18,21 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+# VSProjects
+*.sln
+*.vcxproj*
+
+# Compiler
+*.pdb
+*.ilk
+*.log
+
+*.exe
+
+msvc/
+
 # =========================
 # Operating System Files
 # =========================
+
+*.dll
