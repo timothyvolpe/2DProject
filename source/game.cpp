@@ -89,11 +89,13 @@ bool CGame::initialize()
 	if( !m_pGameWindow->initialize() )
 		return false;
 	// Create the input
+	
 	m_pInput = new CInput();
 	// Create the graphics
 	m_pGraphics = new CGraphics();
 	if( !m_pGraphics->initialize() )
 		return false;
+	
 	// Create interface manager
 	m_pInterfaceManager = new CInterfaceManager();
 	if( !m_pInterfaceManager->initialize() )

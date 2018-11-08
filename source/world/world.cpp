@@ -267,6 +267,8 @@ void CWorld::draw( glm::mat4& orthoMat )
 	// Draw the environment background
 	m_pEnvironment->draw( ENV_LAYER_BACKGROUND, orthoMat );
 
+	StartGLDebug( "DrawWorld" );
+
 	CGame::getInstance().getGraphics()->getShaderManager()->bind( pBaseProgram );
 	// Render chunks
 	for( auto it = m_pChunkManager->getChunksRendered().begin(); it != m_pChunkManager->getChunksRendered().end(); it++ )
@@ -316,6 +318,8 @@ void CWorld::draw( glm::mat4& orthoMat )
 		glUniformMatrix4fv( pDebugProgram->getUniform( "MVPMatrix" ), 1, GL_FALSE, &mvpMatrix[0][0] );
 		m_pPhysWorld->DrawDebugData();
 	}
+
+	EndGLDebug();
 
 }
 

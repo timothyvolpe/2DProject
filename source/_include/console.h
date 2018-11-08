@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <iostream>
+#include <stack>
 
 #define GAME_EXTERNAL_CONSOLE
 #define LOG_FILE L"console.log"
@@ -49,7 +50,7 @@ private:
 
 	void setColor( unsigned char color );
 
-	const char *m_pGLDebugName;
+	std::stack<const char*> m_GLDebugNameStack;
 public:
 	CConsole();
 	~CConsole();

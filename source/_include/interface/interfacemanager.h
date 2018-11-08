@@ -10,11 +10,14 @@ class CInterfaceScreen;
 
 struct InterfaceQuad {
 	glm::ivec2 absPos, absSize;
+	glm::vec2 tex_start, tex_stop;
+	char textureId;
 };
 #pragma pack(push, 4)
 typedef struct {
 	GLushort posx, posy;
-	GLushort layer;
+	GLushort texu, texv;
+	char textureId;
 } InterfaceVertex;
 #pragma pack(pop)
 
@@ -23,13 +26,14 @@ class CInterfaceManager
 private:
 	std::map<std::wstring, CFont*> m_fontMap;
 	std::vector<CInterfaceScreen*> m_activeScreens;
+
 	std::vector<InterfaceQuad> m_interfaceQuads;
 
 	GLuint m_vaoId;
 	GLuint m_vboId;
 	GLuint m_iboId;
 
-	unsigned int m_quadBufferSize;
+	unsigned int m_quadMaxBufferSize;
 	unsigned int m_vertexCount, m_indexCount;
 
 	bool loadFonts();
@@ -51,7 +55,7 @@ public:
 	bool addScreen( CInterfaceScreen *pScreen );
 	bool removeScreen( CInterfaceScreen *pScreen );
 
-	void addQuad( glm::ivec2 absolutePosition, glm::ivec2 absoluteSize );
+	void addQuad( glm::ivec2 absolutePosition, glm::ivec2 absoluteSize, char textureId, glm::vec2 tex_start, glm::vec2 tex_stop );
 	void clearQuads();
 
 	CFont* getFont( const wchar_t* fontName );

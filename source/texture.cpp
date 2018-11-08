@@ -148,6 +148,9 @@ bool CTexture2D::loadTextureFromMemory( unsigned char *pBuffer, size_t length, i
 }
 
 void CTexture2D::bind( GLuint textureUnit ) {
+	if( textureUnit >= GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS ) {
+		PrintError( L"Exceeded maximum number of texture units on the system!\n" );
+	}
 	glActiveTexture( GL_TEXTURE0+textureUnit );
 	glBindTexture( GL_TEXTURE_2D, m_textureId );
 }
@@ -188,6 +191,9 @@ void CTextureTilemap::destroy()
 }
 
 void CTextureTilemap::bind( GLuint textureUnit ) {
+	if( textureUnit >= GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS ) {
+		PrintError( L"Exceeded maximum number of texture units on the system!\n" );
+	}
 	glActiveTexture( GL_TEXTURE0+textureUnit );
 	glBindTexture( GL_TEXTURE_2D, m_textureId );
 }

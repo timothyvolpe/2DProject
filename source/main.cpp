@@ -28,7 +28,7 @@
 // FreeType
 #pragma comment( lib, "freetype.lib" )*/
 
-int CALLBACK WinMain( HINSTANCE hInstacne, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow )
+int CALLBACK WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow )
 {
 	CGame& gameInstance = CGame::getInstance();
 

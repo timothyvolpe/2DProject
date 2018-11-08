@@ -47,7 +47,7 @@ public:
 	CShaderProgram();
 	~CShaderProgram();
 
-	bool initializeProgram( std::wstring name, CShaderObject *pVertexObject, CShaderObject *pFragmentObject, std::vector<std::string> uniformNames );
+	bool initializeProgram( std::wstring name, CShaderObject *pVertexObject, CShaderObject* pGeomtryObject, CShaderObject *pFragmentObject, std::vector<std::string> uniformNames );
 	void destroy();
 
 	GLuint getUniform( std::string name );

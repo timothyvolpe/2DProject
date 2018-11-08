@@ -16,7 +16,7 @@ void CInterfacePanel::onDestroy() {
 
 bool CInterfacePanel::onActivate()
 {
-	CGame::getInstance().getInterfaceManager()->addQuad( this->getAbsolutePosition(), this->getSize() );
+	CGame::getInstance().getInterfaceManager()->addQuad( this->getAbsolutePosition(), this->getSize(), 0, glm::vec2( 0.0f, 0.0f ), glm::vec2( 1.0f, 1.0f ) );
 	return true;
 }
 

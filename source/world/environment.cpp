@@ -50,6 +50,8 @@ void CEnvironment::draw( unsigned char worldLayer, glm::mat4 orthoMatrix )
 
 	CGame::getInstance().getGraphics()->getShaderManager()->bind( pEnvProgram );
 
+	StartGLDebug( "DrawEnvironment" );
+
 	switch( worldLayer )
 	{
 	case ENV_LAYER_BACKGROUND:
@@ -71,4 +73,6 @@ void CEnvironment::draw( unsigned char worldLayer, glm::mat4 orthoMatrix )
 	case ENV_LAYER_FOREGROUND:
 		break;
 	}
+
+	EndGLDebug();
 }

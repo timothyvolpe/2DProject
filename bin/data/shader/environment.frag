@@ -1,4 +1,4 @@
-#version 120
+#version 150
 
 uniform vec2 screenResolution;
 uniform int drawMode;

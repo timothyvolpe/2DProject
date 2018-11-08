@@ -7,7 +7,6 @@ CConsole::CConsole() {
 	m_hCerr = 0;
 	m_hLogFile = 0;
 #endif
-	m_pGLDebugName = "";
 }
 CConsole::~CConsole() {
 }
@@ -57,6 +56,14 @@ bool CConsole::initialize()
 }
 void CConsole::destroy()
 {
+	if( m_GLDebugNameStack.size() != 0 ) {
+		PrintWarn( L"GL debug stack not empty!\n" );
+		while( m_GLDebugNameStack.size() ) {
+			PrintWarn( L"\t%hs\n", m_GLDebugNameStack.top() );
+			m_GLDebugNameStack.pop();
+		}
+	}
+
 #if defined( GAME_EXTERNAL_CONSOLE ) && defined( _WIN32 )
 	// Close log file
 	if( m_hLogFile ) {
@@ -86,15 +93,23 @@ void CConsole::printColor( std::wstring msg, unsigned char color )
 }
 
 void CConsole::startGLDebug( const char *pName ) {
-	GLenum err = glGetError();
-	if( err != 0 ) {
-		PrintError( L"Uncaught error at startGLDebug\n" );
+	if( m_GLDebugNameStack.empty() ) {
+		GLenum err = glGetError();
+		if( err != 0 ) {
+			PrintError( L"Uncaught error at startGLDebug @%hs (%hs)\n", pName, gluErrorString( err ) );
+		}
 	}
-	m_pGLDebugName = pName;
+	else {
+		// Clear all errors in parent
+		while( !checkGLError( true ) );
+	}
+	m_GLDebugNameStack.push( pName );
 }
 void CConsole::endGLDebug() {
-	this->checkGLError( true );
-	m_pGLDebugName = "";
+	// Check and clear all errors
+	while( !checkGLError( true ) );
+	assert( m_GLDebugNameStack.size() );
+	m_GLDebugNameStack.pop();
 }
 
 bool CConsole::checkGLError( bool debug )
@@ -105,7 +120,7 @@ bool CConsole::checkGLError( bool debug )
 			PrintError( L"OpenGL error occured (code: %i, \'%hs\')\n", err, gluErrorString( err ) );
 		}
 		else {
-			PrintError( L"[DEBUG][%hs] OpenGL error occured (code: %i, \'%hs\')\n", m_pGLDebugName, err, gluErrorString( err ) );
+			PrintError( L"[DEBUG][%hs] OpenGL error occured (code: %i, \'%hs\')\n", m_GLDebugNameStack.top(), err, gluErrorString( err ) );
 		}
 		return false;
 	}

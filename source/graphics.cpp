@@ -32,6 +32,7 @@ bool CGraphics::initialize()
 {
 	CGameConfig *pConfig = CGame::getInstance().getConfig();
 	GLenum glewError;
+	GLenum contextErr;
 
 	// Store the game window
 	m_pGameWindowHandle = CGame::getInstance().getWindow()->getSDLWindow();
@@ -63,6 +64,14 @@ bool CGraphics::initialize()
 		return false;
 	}
 
+	// Check for errors in context creation
+	while( contextErr = glGetError() ) {
+		PrintError( L"Failed to create OpenGL context with code %d (\'%hs\')", contextErr, gluErrorString( contextErr ) );
+		return false;
+	}
+
+	StartGLDebug( "SetupOpenGL" );
+
 	// Initialize GLEW
 	PrintInfo( L"Initializing GLEW...\n" );
 	glewError = glewInit();
@@ -89,6 +98,8 @@ bool CGraphics::initialize()
 	m_pTextureManager = new CTextureManager();
 	if( !m_pTextureManager->initialize() )
 		return false;
+
+	EndGLDebug();
 
 	return true;
 }
@@ -117,8 +128,6 @@ void CGraphics::setupGraphics()
 	else
 		SDL_GL_SetSwapInterval( 0 );
 
-	StartGLDebug( "Setup OpenGL" );
-
 	glClearColor( 0.0f, 0.0f, 0.0f, 1.0f );
 	glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 
@@ -129,8 +138,6 @@ void CGraphics::setupGraphics()
 	glDepthFunc( GL_LEQUAL );
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 	glEnable( GL_BLEND );
-
-	EndGLDebug();
 }
 
 void CGraphics::update()
@@ -152,6 +159,8 @@ void CGraphics::draw()
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
 	viewMatrix = glm::lookAt( glm::vec3( 0.0f, 0.0f, 1.0f ), glm::vec3( 0.0f, 0.0f, 0.0f ), glm::vec3( 0.0f, 1.0f, 0.0f ) );
+
+	
 
 	// Draw the world
 	CGame::getInstance().getWorld()->draw( m_orthoMatrix );

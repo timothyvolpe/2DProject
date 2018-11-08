@@ -31,6 +31,10 @@ bool CShaderObject::initializeShader( std::wstring file, GLenum type )
 		PrintInfo( L"(VERT)...\n" );
 		file += L".vert";
 		break;
+	case GL_GEOMETRY_SHADER:
+		PrintInfo( L"(GEOM)...\n" );
+		file += L".geom";
+		break;
 	case GL_FRAGMENT_SHADER:
 		PrintInfo( L"(FRAG)...\n" );
 		file += L".frag";
@@ -65,7 +69,7 @@ bool CShaderObject::initializeShader( std::wstring file, GLenum type )
 		return false;
 	}
 
-	StartGLDebug( "Create Shader" );
+	StartGLDebug( "CreateShader" );
 
 	// Create the shader object
 	m_shaderId = glCreateShader( m_shaderType );
@@ -154,14 +158,14 @@ CShaderProgram::CShaderProgram() {
 CShaderProgram::~CShaderProgram() {
 }
 
-bool CShaderProgram::initializeProgram( std::wstring name, CShaderObject *pVertexObject, CShaderObject *pFragmentObject, std::vector<std::string> uniformNames )
+bool CShaderProgram::initializeProgram( std::wstring name, CShaderObject *pVertexObject, CShaderObject* pGeomtryObject, CShaderObject *pFragmentObject, std::vector<std::string> uniformNames )
 {
 	GLint linkStatus, logLength;
 
 	m_name = name;
 	PrintInfo( L"Linking shader program \"%s\"...\n", m_name.c_str() );
 
-	StartGLDebug( "Create Program" );
+	StartGLDebug( "CreateProgram" );
 
 	// Create the program
 	m_programId = glCreateProgram();
@@ -173,6 +177,8 @@ bool CShaderProgram::initializeProgram( std::wstring name, CShaderObject *pVerte
 	// Attach the shaders
 	if( pVertexObject )
 		glAttachShader( m_programId, pVertexObject->getShaderId() );
+	if( pGeomtryObject )
+		glAttachShader( m_programId, pGeomtryObject->getShaderId() );
 	if( pFragmentObject )
 		glAttachShader( m_programId, pFragmentObject->getShaderId() );
 
@@ -221,7 +227,7 @@ bool CShaderProgram::initializeProgram( std::wstring name, CShaderObject *pVerte
 	}
 
 	EndGLDebug();
-	StartGLDebug( "Find Shaders" );
+	StartGLDebug( "FindShaders" );
 
 	// Find uniforms
 	for( auto it = uniformNames.begin(); it != uniformNames.end(); it++ )
@@ -237,11 +243,13 @@ bool CShaderProgram::initializeProgram( std::wstring name, CShaderObject *pVerte
 	}
 
 	EndGLDebug();
-	StartGLDebug( "Detach Shaders" );
+	StartGLDebug( "DetachShaders" );
 
 	// Detach the shaders
 	if( pVertexObject )
 		glDetachShader( m_programId, pVertexObject->getShaderId() );
+	if( pGeomtryObject )
+		glDetachShader( m_programId, pGeomtryObject->getShaderId() );
 	if( pFragmentObject )
 		glDetachShader( m_programId, pFragmentObject->getShaderId() );
 
@@ -260,7 +268,7 @@ void CShaderProgram::destroy()
 }
 
 void CShaderProgram::bind() {
-	StartGLDebug( "Bind Shader" );
+	StartGLDebug( "BindShader" );
 	glUseProgram( m_programId );
 	EndGLDebug();
 }

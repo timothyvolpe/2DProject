@@ -40,7 +40,7 @@ void CShaderManager::destroy()
 bool CShaderManager::loadPrograms()
 {
 	// Load test programs
-	CShaderObject *pBaseVert, *pBaseFrag, *pDebugVert, *pDebugFrag, *pEnvVert, *pEnvFrag, *pIntVert, *pIntFrag;
+	CShaderObject *pBaseVert, *pBaseFrag, *pDebugVert, *pDebugFrag, *pEnvVert, *pEnvFrag, *pIntVert, *pIntGeom, *pIntFrag;
 	std::vector<std::string> baseUniforms, debugUniforms, envUniforms, intUniforms;
 	CShaderProgram *pBaseProgram, *pDebugProgram, *pEnvProgram, *pIntProgram;
 
@@ -65,6 +65,9 @@ bool CShaderManager::loadPrograms()
 	pIntVert = new CShaderObject();
 	if( !pIntVert->initializeShader( L"interface", GL_VERTEX_SHADER ) )
 		return false;
+	pIntGeom = new CShaderObject();
+	if( !pIntGeom->initializeShader( L"interface", GL_GEOMETRY_SHADER ) )
+		return false;
 	pIntFrag = new CShaderObject();
 	if( !pIntFrag->initializeShader( L"interface", GL_FRAGMENT_SHADER ) )
 		return false;
@@ -73,7 +76,7 @@ bool CShaderManager::loadPrograms()
 	pBaseProgram = new CShaderProgram();
 	baseUniforms.push_back( "MVPMatrix" );
 	baseUniforms.push_back( "tex2dsampler" );
-	if( !pBaseProgram->initializeProgram( L"base", pBaseVert, pBaseFrag, baseUniforms ) )
+	if( !pBaseProgram->initializeProgram( L"base", pBaseVert, NULL, pBaseFrag, baseUniforms ) )
 		return false;
 	this->bind( pBaseProgram );
 	glUniform1i( pBaseProgram->getUniform( "tex2dsampler" ), 0 );
@@ -82,7 +85,7 @@ bool CShaderManager::loadPrograms()
 	// Debug
 	pDebugProgram = new CShaderProgram();
 	debugUniforms.push_back( "MVPMatrix" );
-	if( !pDebugProgram->initializeProgram( L"debug", pDebugVert, pDebugFrag, debugUniforms ) )
+	if( !pDebugProgram->initializeProgram( L"debug", pDebugVert, NULL, pDebugFrag, debugUniforms ) )
 		return false;
 	m_shaderPrograms.insert( std::pair<std::wstring, CShaderProgram*>( pDebugProgram->getName(), pDebugProgram ) );
 
@@ -91,7 +94,7 @@ bool CShaderManager::loadPrograms()
 	envUniforms.push_back( "MVPMatrix" );
 	envUniforms.push_back( "screenResolution" );
 	envUniforms.push_back( "drawMode" );
-	if( !pEnvProgram->initializeProgram( L"environment", pEnvVert, pEnvFrag, envUniforms ) )
+	if( !pEnvProgram->initializeProgram( L"environment", pEnvVert, NULL, pEnvFrag, envUniforms ) )
 		return false;
 	m_shaderPrograms.insert( std::pair<std::wstring, CShaderProgram*>( pEnvProgram->getName(), pEnvProgram ) );
 
@@ -99,7 +102,7 @@ bool CShaderManager::loadPrograms()
 	pIntProgram = new CShaderProgram();
 	intUniforms.push_back( "MVPMatrix" );
 	intUniforms.push_back( "layerSize" );
-	if( !pIntProgram->initializeProgram( L"interface", pIntVert, pIntFrag, intUniforms ) )
+	if( !pIntProgram->initializeProgram( L"interface", pIntVert, pIntGeom, pIntFrag, intUniforms ) )
 		return false;
 	this->bind( pIntProgram );
 	glUniform1f( pIntProgram->getUniform( "layerSize" ), LAYER_SIZE );
@@ -112,6 +115,7 @@ bool CShaderManager::loadPrograms()
 	DestroyDelete( pEnvVert );
 	DestroyDelete( pEnvFrag );
 	DestroyDelete( pIntVert );
+	DestroyDelete( pIntGeom );
 	DestroyDelete( pIntFrag );
 
 	return true;
