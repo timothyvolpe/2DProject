@@ -3,12 +3,12 @@
 #include <Box2D\Box2D.h>
 #include "entitybase.h"
 
-class CTexture2D;
+class CTexture;
 
 class CEntityPlatform : public CEntityRenderablePhysics
 {
 private:
-	CTexture2D *m_pPlatformTexture;
+	CTexture *m_pPlatformTexture;
 
 	std::wstring m_texturePath;
 	bool m_bStatic;

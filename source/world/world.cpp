@@ -167,7 +167,8 @@ bool CWorld::initialize()
 		return false;
 	pCurrentPlatform->setPosition( glm::vec2( CHUNK_HEIGHT_UNITS*6-2, CHUNK_HEIGHT_UNITS*6+6 ) );
 	pCurrentPlatform->setDimensions( glm::vec2( 5.0f, 5.0f ) );
-	pCurrentPlatform->setTexture( L"#FONT" );
+	//pCurrentPlatform->setTexture( L"#FONT" );
+	pCurrentPlatform->setTexture( L"#MAP" );
 	pCurrentPlatform->setStatic( true );
 	pCurrentPlatform->activate();
 
@@ -213,7 +214,7 @@ bool CWorld::loadTilemaps()
 	m_pBlockTilemap->addTile( L"env\\stone.png" ); // 0
 	m_pBlockTilemap->addTile( L"env\\dirt.png" ); // 1
 	m_pBlockTilemap->addTile( L"env\\grass.png" ); // 2
-	if( !m_pBlockTilemap->generateTilemap( DEFAULT_TILEMAPSIZE, DEFAULT_TILESIZE ) )
+	if( !m_pBlockTilemap->binPackTilemap( DEFAULT_TILEMAPSIZE ) )
 		return false;
 
 	return true;
@@ -221,13 +222,13 @@ bool CWorld::loadTilemaps()
 bool CWorld::initBlocks()
 {
 	m_pBlockStone = new CBlockTerrain( BLOCK_ID_STONE );
-	m_pBlockStone->setTextureIndex( TEXTURE_INDEX_STONE );
+	m_pBlockStone->setTextureIndex( m_pBlockTilemap->getTileIndex( L"env\\stone.png" ) );
 	this->registerBlock( m_pBlockStone );
 	m_pBlockDirt = new CBlockTerrain( BLOCK_ID_DIRT );
-	m_pBlockDirt->setTextureIndex( TEXTURE_INDEX_DIRT );
+	m_pBlockDirt->setTextureIndex( m_pBlockTilemap->getTileIndex( L"env\\dirt.png" ) );
 	this->registerBlock( m_pBlockDirt );
 	m_pBlockGrass = new CBlockTerrain( BLOCK_ID_GRASS );
-	m_pBlockGrass->setTextureIndex( TEXTURE_INDEX_GRASS );
+	m_pBlockGrass->setTextureIndex( m_pBlockTilemap->getTileIndex( L"env\\grass.png" ) );
 	this->registerBlock( m_pBlockGrass );
 
 	return true;

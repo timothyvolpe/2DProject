@@ -108,6 +108,8 @@ bool CTexture2D::loadTextureFromFile( boost::filesystem::path relativePath, Text
 	else
 		boost::gil::for_each_pixel( const_view( pngImage ), ImagePacker_rgb8( &pngData, pngImage ) );
 
+	StartGLDebug( "CreateTexture" );
+
 	// Bind texture
 	glBindTexture( GL_TEXTURE_2D, m_textureId );
 	// Parameters
@@ -124,10 +126,14 @@ bool CTexture2D::loadTextureFromFile( boost::filesystem::path relativePath, Text
 	else
 		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB8, pngImage.width(), pngImage.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, &pngData[0] );
 
+	EndGLDebug();
+
 	return true;
 }
 bool CTexture2D::loadTextureFromMemory( unsigned char *pBuffer, size_t length, int width, int height, TextureDescriptor &desc )
 {
+	StartGLDebug( "CreateTexture" );
+
 	// Bind texture
 	glBindTexture( GL_TEXTURE_2D, m_textureId );
 	// Parameters
@@ -143,6 +149,8 @@ bool CTexture2D::loadTextureFromMemory( unsigned char *pBuffer, size_t length, i
 		glTexImage2D( GL_TEXTURE_2D, 0, GL_R8, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, &pBuffer[0] );
 	else
 		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, &pBuffer[0] );
+
+	EndGLDebug();
 
 	return true;
 }
@@ -165,7 +173,6 @@ GLuint CTexture2D::getTextureId() const {
 
 CTextureTilemap::CTextureTilemap() {
 	m_mapSize = 0;
-	m_mapTilesize = 0;
 }
 CTextureTilemap::~CTextureTilemap() {
 }
@@ -183,7 +190,15 @@ bool CTextureTilemap::initialize()
 }
 void CTextureTilemap::destroy()
 {
-	// Destroy the texture
+	this->clear();
+}
+
+void CTextureTilemap::clear()
+{
+	m_tileQueue.clear();
+	m_tileIndexTable.clear();
+	m_tileCoordTable.clear();
+	m_mapSize = 0;
 	if( m_textureId ) {
 		glDeleteTextures( 1, &m_textureId );
 		m_textureId = 0;
@@ -202,36 +217,18 @@ void CTextureTilemap::addTile( std::wstring relativePath ) {
 	m_tileQueue.push_back( relativePath );
 }
 
-bool CTextureTilemap::generateTilemap( int size, int tilesize )
+std::vector<CTextureTilemap::TextureTile*> CTextureTilemap::GenerateTileData( std::vector<std::wstring>& tileQueue )
 {
-	int tileCount, currentTile;
-	std::vector<std::vector<GLubyte>> tilesData;
+	std::vector<CTextureTilemap::TextureTile*> tileData;
 	boost::filesystem::path tilePath;
 	boost::gil::rgba8_image_t tileImage;
-	std::vector<GLubyte> fullTilemap;
 
-	// Make sure they fit evenly
-	if( size % tilesize != 0 ) {
-		PrintError( L"Tilemap size must be evenly divisible by tile size\n" );
-		return false;
-	}
-	// Make sure all the tiles will fit
-	tileCount = m_tileQueue.size();
-	if( tileCount > (size*size / (tilesize*tilesize)) ) {
-		PrintWarn( L"Too many tiles in tilemap, some will be ignored\n" );
-		tileCount = size*size / (tilesize*tilesize);
-	}
-
-	// Load each tile
-	tilesData.resize( tileCount );
-	currentTile = 0;
-	for( auto it = m_tileQueue.begin(); it != m_tileQueue.end(); it++ )
+	for( auto it = tileQueue.begin(); it != tileQueue.end(); it++ )
 	{
 		tilePath = GameFilesystem::ConstructPath( (*it), FILESYSTEM_DIR_TEXTURES );
 		// Make sure it exists
 		if( !GameFilesystem::IsValidFile( tilePath ) ) {
 			PrintWarn( L"Could not find tile \"%s\"\n", (*it).c_str() );
-			currentTile++;
 			continue;
 		}
 		// Load it
@@ -240,46 +237,166 @@ bool CTextureTilemap::generateTilemap( int size, int tilesize )
 		}
 		catch( std::ios_base::failure &e ) {
 			PrintWarn( L"Could not load tile \"%s\" (%hs)\n", (*it).c_str(), e.what() );
-			currentTile++;
 			continue;
 		}
-		// make sure its the correct size
-		if( tileImage.width() != tilesize && tileImage.height() != tilesize ) {
-			PrintWarn( L"Discarding improperly sized tile \"%s\"\n", (*it).c_str() );
-			currentTile++;
-			continue;
-		}
-		// Pack into vector
-		boost::gil::for_each_pixel( const_view( tileImage ), ImagePacker_rgba8( &tilesData[currentTile], tileImage ) );
-		currentTile++;
-	}
-	// Construct full image
-	int tilesPerRow = size / tilesize;
-	currentTile = 0;
-	fullTilemap.resize( size*size*4 );
-	for( int y = 0; y < tilesPerRow; y++ )
-	{
-		for( int x = 0; x < tilesPerRow; x++ )
-		{
-			// for each pixel
-			for( int u = 0; u < tilesize; u++ )
-			{
-				for( int v = 0; v < tilesize; v++ ){
-					fullTilemap[((x*tilesize)+(y*tilesize*tilesize*tilesPerRow)+u+(v*tilesize*tilesPerRow))*4] = tilesData[currentTile][(u+v*tilesize)*4];
-					fullTilemap[((x*tilesize)+(y*tilesize*tilesize*tilesPerRow)+u+(v*tilesize*tilesPerRow))*4+1] = tilesData[currentTile][(u+v*tilesize)*4+1];
-					fullTilemap[((x*tilesize)+(y*tilesize*tilesize*tilesPerRow)+u+(v*tilesize*tilesPerRow))*4+2] = tilesData[currentTile][(u+v*tilesize)*4+2];
-					fullTilemap[((x*tilesize)+(y*tilesize*tilesize*tilesPerRow)+u+(v*tilesize*tilesPerRow))*4+3] = tilesData[currentTile][(u+v*tilesize)*4+3];
-				}
-			}
-			currentTile++;
-			if( currentTile >= tileCount )
-				break;
-		}
-		if( currentTile >= tileCount )
-			break;
+		// Pack into tile array
+		CTextureTilemap::TextureTile* pTextureTile = new CTextureTilemap::TextureTile();
+		pTextureTile->name = (*it);
+		pTextureTile->width = tileImage.width();
+		pTextureTile->height = tileImage.height();
+		boost::gil::for_each_pixel( const_view( tileImage ), ImagePacker_rgba8( &pTextureTile->tileData, tileImage ) );
+		tileData.push_back( pTextureTile );
 	}
 
-	// Create the tilemap
+	tileQueue.clear();
+	return tileData;
+}
+CTextureTilemap::BinNode* CTextureTilemap::BinNode::binPackInsert( CTextureTilemap::TextureTile* pTile )
+{
+	// Check if it isn't a leaf
+	if( this->pLeftChild || this->pRightChild ) {
+		// Pick left node first
+		if( this->pLeftChild ) {
+			BinNode *pNewNode = this->pLeftChild->binPackInsert( pTile );
+			// If we found a spot
+			if( pNewNode )
+				return pNewNode;
+		}
+		if( this->pRightChild ) {
+			BinNode *pNewNode = this->pRightChild->binPackInsert( pTile );
+			// If we found a spot
+			if( pNewNode )
+				return pNewNode;
+		}
+		// No space for it
+		return NULL;
+	}
+	// Handle leaf nodes
+	else
+	{
+		int deltaW, deltaH;
+
+		// Check if this bin is full
+		if( pTileStored )
+			return NULL;
+		// Check if it wont fit
+		if( pTile->width > this->width || pTile->height > this->height )
+			return NULL;
+		// Check if it completely fills the bin
+		if( pTile->width == this->width && pTile->height == this->height )
+			return this;
+
+		// It does fit and we can fit new nodes as well
+		this->pLeftChild = new BinNode();
+		this->pRightChild = new BinNode();
+		// Calculate new size
+		deltaW = this->width - pTile->width;
+		deltaH = this->height -  pTile->height;
+		if( deltaW > deltaH )
+		{
+			this->pLeftChild->width = pTile->width;
+			this->pLeftChild->height = this->height;
+			this->pLeftChild->top = this->top;
+			this->pLeftChild->left = this->left;
+			this->pRightChild->width = deltaW;
+			this->pRightChild->height = this->height;
+			this->pRightChild->top = this->top;
+			this->pRightChild->left = this->left + pTile->width;
+		}
+		else
+		{
+			this->pLeftChild->width = this->width;
+			this->pLeftChild->height = pTile->height;
+			this->pLeftChild->top = this->top;
+			this->pLeftChild->left = this->left;
+			this->pRightChild->width = this->width;
+			this->pRightChild->height = deltaH;
+			this->pRightChild->top = this->top + pTile->height;
+			this->pRightChild->left = this->left;
+		}
+
+		// Add to left node
+		return this->pLeftChild->binPackInsert( pTile );
+	}
+
+	return NULL;
+}
+void CTextureTilemap::RenderAndDeleteBin( CTextureTilemap::BinNode **pNode, std::vector<GLubyte> &tileMapData, int size )
+{
+	// Perform postorder traversal
+	BinNode *pNodeObj = (*pNode);
+
+	// End of the line
+	if( pNodeObj == NULL )
+		return;
+	// Perform on left
+	CTextureTilemap::RenderAndDeleteBin( &pNodeObj->pLeftChild, tileMapData, size );
+	// Perform on right
+	CTextureTilemap::RenderAndDeleteBin( &pNodeObj->pRightChild, tileMapData, size );
+
+	// Render this node
+	if( pNodeObj->pTileStored ) {
+		for( int rows = 0; rows < pNodeObj->pTileStored->height; rows++ ) {
+			for( int width = 0; width < pNodeObj->pTileStored->width; width++ ) {
+				// Copy pixel (4 bytes)
+				memcpy( &tileMapData[(pNodeObj->left+width)*4 + (pNodeObj->top+rows)*(size*4)], &pNodeObj->pTileStored->tileData[(width*4)+rows*(pNodeObj->pTileStored->width*4)], 4 );
+			}
+		}
+	}
+
+	delete pNodeObj;
+	*pNode = 0;
+}
+bool CTextureTilemap::binPackTilemap( int size )
+{
+	std::vector<CTextureTilemap::TextureTile*> tileData;
+	BinNode *pRootNode, *pPickedBin;
+	std::vector<GLubyte> tileMapData;
+
+	assert( size );
+	m_mapSize = size;
+
+	// Generate tile data
+	tileData = CTextureTilemap::GenerateTileData( m_tileQueue );
+
+	// Sort nodes by area
+	std::sort( tileData.begin(), tileData.end(), CTextureTilemap::CompareTileAreasPtr );
+	// Create root node
+	pRootNode = new BinNode();
+	pRootNode->width = m_mapSize;
+	pRootNode->height = m_mapSize;
+	// Pack the nodes
+	for( auto it = tileData.begin(); it != tileData.end(); it++ )
+	{
+		pPickedBin = pRootNode->binPackInsert( (*it) );
+		if( !pPickedBin ) {
+			PrintError( L"Tilemap ran out of space!\n" );
+			continue;
+		}
+		// Put tile in bin
+		pPickedBin->pTileStored = (*it);
+		// Add coords
+		m_tileCoordTable.push_back( glm::vec4( (float)pPickedBin->left / m_mapSize, (float)pPickedBin->top / m_mapSize, (float)(pPickedBin->left+pPickedBin->width) / m_mapSize, (float)(pPickedBin->top+pPickedBin->height) / m_mapSize ) );
+		// Add to lookup table
+		m_tileIndexTable.insert( std::pair<std::wstring, unsigned short>( (*it)->name, (unsigned short)m_tileIndexTable.size() ) );
+	}
+
+	// Traverse tree and construct tilemap
+	tileMapData.resize( m_mapSize*m_mapSize*4 );
+	RenderAndDeleteBin( &pRootNode, tileMapData, m_mapSize );
+
+	// Clean up tiles
+	for( auto it = tileData.begin(); it != tileData.end(); it++ ) {
+		if( (*it) ) {
+			delete (*it);
+			(*it) = 0;
+		}
+	}
+	tileData.clear();
+
+	StartGLDebug( "CreateTexture" );
+
+	// Create OpenGL texture
 	// Bind texture
 	glBindTexture( GL_TEXTURE_2D, m_textureId );
 	// Parameters
@@ -289,20 +406,22 @@ bool CTextureTilemap::generateTilemap( int size, int tilesize )
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 	glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
 	// Store the texture info
-	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, &fullTilemap[0] );
+	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, m_mapSize, m_mapSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, &tileMapData[0] );
 
-	m_mapSize = size;
-	m_mapTilesize = tilesize;
+	EndGLDebug();
 
 	return true;
 }
 
-glm::vec4 CTextureTilemap::getTileBounds( int index )
-{
-	int y, x;
-	y = (int)floor( index / (m_mapSize / m_mapTilesize) );
-	x = index - y*(m_mapSize / m_mapTilesize);
-	return glm::vec4( (float)(x*m_mapTilesize) / (float)m_mapSize, (float)(y*m_mapTilesize) / (float)m_mapSize, (float)((x+1)*m_mapTilesize) / (float)m_mapSize, (float)((y+1)*m_mapTilesize) / (float)m_mapSize );
+glm::vec4 CTextureTilemap::getTileCoords( unsigned short index ) {
+	return this->m_tileCoordTable[index];
+}
+unsigned short CTextureTilemap::getTileIndex( std::wstring path ) {
+	auto it = m_tileIndexTable.find( path );
+	if( it != m_tileIndexTable.end() )
+		return (*it).second;
+	PrintWarn( L"Could not find texture \'%s\' in map", path.c_str() );
+	return 0;
 }
 
 GLuint CTextureTilemap::getTextureId() const {

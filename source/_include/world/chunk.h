@@ -18,8 +18,6 @@ private:
 
 	glm::ivec2 m_position;
 	glm::ivec2 m_relativePosition;
-
-	CTexture2D *m_pTestTexture;
 public:
 	CChunk();
 	~CChunk();

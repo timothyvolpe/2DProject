@@ -36,13 +36,6 @@ enum : unsigned short
 	BLOCK_ID_GRASS = 3
 };
 
-enum : unsigned short
-{
-	TEXTURE_INDEX_STONE = 0,
-	TEXTURE_INDEX_DIRT = 1,
-	TEXTURE_INDEX_GRASS = 2
-};
-
 enum : unsigned char
 {
 	PHYS_USERDATA_UNKNOWN = 0,

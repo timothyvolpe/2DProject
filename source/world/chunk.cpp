@@ -11,7 +11,6 @@
 CChunk::CChunk() {
 	m_position = glm::ivec2( 0, 0 );
 	m_relativePosition = glm::ivec2( 0, 0 );
-	m_pTestTexture = 0;
 }
 CChunk::~CChunk() {
 }
@@ -28,15 +27,11 @@ bool CChunk::initialize()
 	textureDesc.wrapS = GL_CLAMP_TO_EDGE;
 	textureDesc.wrapT = GL_CLAMP_TO_EDGE;
 	textureDesc.useAlpha = false;
-	m_pTestTexture = CGame::getInstance().getGraphics()->getTextureManager()->loadTexture2D( L"env\\stone.png", textureDesc );
-	if( !m_pTestTexture )
-		return false;
 	
 	return true;
 }
 void CChunk::destroy()
 {
-	m_pTestTexture = 0;
 }
 
 bool CChunk::populateChunk()
@@ -64,7 +59,7 @@ void CChunk::draw()
 		{
 			if( !m_blocks[x][y] )
 				continue;
-			uvbounds = CGame::getInstance().getWorld()->getBlockTilemap()->getTileBounds( m_blocks[x][y]->getTextureIndex() );
+			uvbounds = CGame::getInstance().getWorld()->getBlockTilemap()->getTileCoords( m_blocks[x][y]->getTextureIndex() );
 			CRenderUtil::drawSpriteTextured( glm::vec2( x*CHUNK_BLOCK_SIZE, y*CHUNK_BLOCK_SIZE ), glm::vec2( CHUNK_BLOCK_SIZE, CHUNK_BLOCK_SIZE ), uvbounds );
 		}
 	}

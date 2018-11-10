@@ -6,6 +6,8 @@
 #include <boost\gil\extension\io\png_dynamic_io.hpp>
 #pragma warning( default : 4996 )
 
+#include <map>
+
 #define DEFAULT_TILEMAPSIZE 2048
 #define DEFAULT_TILESIZE 32
 
@@ -83,12 +85,41 @@ public:
 class CTextureTilemap : public CTexture
 {
 private:
+	struct TextureTile
+	{
+		std::wstring name;
+		std::vector<GLubyte> tileData;
+		int width, height;
+	};
+	struct BinNode
+	{
+		BinNode() : pLeftChild( 0 ), pRightChild( 0 ), pTileStored( 0 ), top( 0 ), left( 0 ) {}
+
+		BinNode* pLeftChild;
+		BinNode* pRightChild;
+		int width, height;
+		int top, left;
+
+		TextureTile *pTileStored;
+
+		BinNode* binPackInsert( TextureTile* pTile );
+	};
+	
+	static bool CompareTileAreasPtr( TextureTile *pLHS, TextureTile *pRHS ) {
+		return pLHS->width*pLHS->height > pRHS->width*pRHS->height;
+	}
+
 	GLuint m_textureId;
 
 	std::vector<std::wstring> m_tileQueue;
 
+	std::map<std::wstring, unsigned short> m_tileIndexTable;
+	std::vector<glm::vec4> m_tileCoordTable;
+
 	int m_mapSize;
-	int m_mapTilesize;
+
+	static std::vector<TextureTile*> GenerateTileData( std::vector<std::wstring>& tileQueue );
+	static void RenderAndDeleteBin( BinNode **pNode, std::vector<GLubyte> &tileMapData, int size );
 public:
 	CTextureTilemap();
 	~CTextureTilemap();
@@ -96,12 +127,16 @@ public:
 	bool initialize();
 	void destroy();
 
+	void clear();
+
 	void bind( GLuint textureUnit );
 
 	void addTile( std::wstring relativePath );
-	bool generateTilemap( int size, int tilesize );
+	bool binPackTilemap( int size );
 
-	glm::vec4 getTileBounds( int index );
+	glm::vec4 getTileCoords( unsigned short index );
+
+	unsigned short getTileIndex( std::wstring path );
 
 	GLuint getTextureId() const;
 };
