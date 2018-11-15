@@ -12,6 +12,8 @@ private:
 	ProgramMap m_shaderPrograms;
 	CShaderProgram *m_pCurrentlyBound;
 
+	bool createAndLoadProgram( const wchar_t *pName, bool vertexShader, bool geomtryShader, bool fragmentShader, std::vector<std::string>& uniforms, std::vector<std::pair<int, std::string>> &attribLocations );
+
 	bool loadPrograms();
 public:
 	CShaderManager();

@@ -158,7 +158,7 @@ CShaderProgram::CShaderProgram() {
 CShaderProgram::~CShaderProgram() {
 }
 
-bool CShaderProgram::initializeProgram( std::wstring name, CShaderObject *pVertexObject, CShaderObject* pGeomtryObject, CShaderObject *pFragmentObject, std::vector<std::string> uniformNames )
+bool CShaderProgram::initializeProgram( std::wstring name, CShaderObject *pVertexObject, CShaderObject* pGeomtryObject, CShaderObject *pFragmentObject, std::vector<std::string> uniformNames, std::vector<std::pair<int, std::string>> &attribLocations )
 {
 	GLint linkStatus, logLength;
 
@@ -227,7 +227,7 @@ bool CShaderProgram::initializeProgram( std::wstring name, CShaderObject *pVerte
 	}
 
 	EndGLDebug();
-	StartGLDebug( "FindShaders" );
+	StartGLDebug( "FindUniformsBindAttribs" );
 
 	// Find uniforms
 	for( auto it = uniformNames.begin(); it != uniformNames.end(); it++ )
@@ -241,6 +241,10 @@ bool CShaderProgram::initializeProgram( std::wstring name, CShaderObject *pVerte
 		}
 		m_uniforms.insert( std::pair<std::string, GLint>( (*it), location ) );
 	}
+
+	// Bind attribs
+	for( auto it = attribLocations.begin(); it != attribLocations.end(); it++ )
+		glBindAttribLocation( m_programId, (*it).first, (*it).second.c_str() );
 
 	EndGLDebug();
 	StartGLDebug( "DetachShaders" );

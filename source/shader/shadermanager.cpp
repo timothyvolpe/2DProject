@@ -37,106 +37,95 @@ void CShaderManager::destroy()
 	m_pCurrentlyBound = 0;
 }
 
-bool CShaderManager::loadPrograms()
+bool CShaderManager::createAndLoadProgram( const wchar_t *pName, bool vertexShader, bool geomtryShader, bool fragmentShader, std::vector<std::string>& uniforms, std::vector<std::pair<int, std::string>> &attribLocations )
 {
-	// Load test programs
-	CShaderObject *pBaseVert, *pBaseFrag, *pDebugVert, *pDebugFrag, *pEnvVert, *pEnvFrag, *pIntVert, *pIntGeom, *pIntFrag;
-	CShaderObject *pSpriteVert, *pSpriteGeom, *pSpriteFrag;
-	std::vector<std::string> baseUniforms, debugUniforms, envUniforms, intUniforms, spriteUniforms;
-	CShaderProgram *pBaseProgram, *pDebugProgram, *pEnvProgram, *pIntProgram, *pSpriteProgram;
+	CShaderObject *pVert, *pGeom, *pFrag;
+	CShaderProgram *pProgram;
 
-	pBaseVert = new CShaderObject();
-	if( !pBaseVert->initializeShader( L"base", GL_VERTEX_SHADER ) )
-		return false;
-	pBaseFrag = new CShaderObject();
-	if( !pBaseFrag->initializeShader( L"base", GL_FRAGMENT_SHADER ) )
-		return false;
-	pDebugVert = new CShaderObject();
-	if( !pDebugVert->initializeShader( L"debug", GL_VERTEX_SHADER ) )
-		return false;
-	pDebugFrag = new CShaderObject();
-	if( !pDebugFrag->initializeShader( L"debug", GL_FRAGMENT_SHADER ) )
-		return false;
-	pEnvVert = new CShaderObject();
-	if( !pEnvVert->initializeShader( L"environment", GL_VERTEX_SHADER ) )
-		return false;
-	pEnvFrag = new CShaderObject();
-	if( !pEnvFrag->initializeShader( L"environment", GL_FRAGMENT_SHADER ) )
-		return false;
-	pIntVert = new CShaderObject();
-	if( !pIntVert->initializeShader( L"interface", GL_VERTEX_SHADER ) )
-		return false;
-	pIntGeom = new CShaderObject();
-	if( !pIntGeom->initializeShader( L"interface", GL_GEOMETRY_SHADER ) )
-		return false;
-	pIntFrag = new CShaderObject();
-	if( !pIntFrag->initializeShader( L"interface", GL_FRAGMENT_SHADER ) )
-		return false;
-	pSpriteVert = new CShaderObject();
-	if( !pSpriteVert->initializeShader( L"sprite", GL_VERTEX_SHADER ) )
-		return false;
-	pSpriteGeom = new CShaderObject();
-	if( !pSpriteGeom->initializeShader( L"sprite", GL_GEOMETRY_SHADER ) )
-		return false;
-	pSpriteFrag = new CShaderObject();
-	if( !pSpriteFrag->initializeShader( L"sprite", GL_FRAGMENT_SHADER ) )
-		return false;
+	pVert = 0;
+	pGeom = 0;
+	pFrag = 0;
+
+	// Create the shader objects
+	if( vertexShader ) {
+		pVert = new CShaderObject();
+		if( !pVert->initializeShader( pName, GL_VERTEX_SHADER ) )
+			return false;
+	}
+	if( geomtryShader ) {
+		pGeom = new CShaderObject();
+		if( !pGeom->initializeShader( pName, GL_GEOMETRY_SHADER ) )
+			return false;
+	}
+	if( fragmentShader ) {
+		pFrag = new CShaderObject();
+		if( !pFrag->initializeShader( pName, GL_FRAGMENT_SHADER ) )
+			return false;
+	}
 
 	// Base
-	pBaseProgram = new CShaderProgram();
-	baseUniforms.push_back( "MVPMatrix" );
-	baseUniforms.push_back( "tex2dsampler" );
-	if( !pBaseProgram->initializeProgram( L"base", pBaseVert, NULL, pBaseFrag, baseUniforms ) )
+	pProgram = new CShaderProgram();
+	if( !pProgram->initializeProgram( pName, pVert, pGeom, pFrag, uniforms, attribLocations ) )
 		return false;
-	this->bind( pBaseProgram );
-	glUniform1i( pBaseProgram->getUniform( "tex2dsampler" ), 0 );
-	m_shaderPrograms.insert( std::pair<std::wstring, CShaderProgram*>( pBaseProgram->getName(), pBaseProgram ) );
-	
+	m_shaderPrograms.insert( std::pair<std::wstring, CShaderProgram*>( pProgram->getName(), pProgram ) );
+
+	DestroyDelete( pVert );
+	DestroyDelete( pFrag );
+	DestroyDelete( pGeom );
+
+	return true;
+}
+
+bool CShaderManager::loadPrograms()
+{
+	std::vector<std::string> uniforms;
+	std::vector<std::pair<int, std::string>> attribLocations;
+
+	// Base
+	uniforms.push_back( "MVPMatrix" );
+	uniforms.push_back( "tex2dsampler" );
+	if( !this->createAndLoadProgram( L"base", true, false, true, uniforms, attribLocations ) )
+		return false;
+	uniforms.clear();
+	attribLocations.clear();
+	this->bind( this->getShaderProgram( L"base" ) );
+	glUniform1i( this->getShaderProgram( L"base" )->getUniform( "tex2dsampler" ), 0 );
 	// Debug
-	pDebugProgram = new CShaderProgram();
-	debugUniforms.push_back( "MVPMatrix" );
-	if( !pDebugProgram->initializeProgram( L"debug", pDebugVert, NULL, pDebugFrag, debugUniforms ) )
+	uniforms.push_back( "MVPMatrix" );
+	if( !this->createAndLoadProgram( L"debug", true, false, true, uniforms, attribLocations ) )
 		return false;
-	m_shaderPrograms.insert( std::pair<std::wstring, CShaderProgram*>( pDebugProgram->getName(), pDebugProgram ) );
-
+	uniforms.clear();
+	attribLocations.clear();
 	// Environment
-	pEnvProgram = new CShaderProgram();
-	envUniforms.push_back( "MVPMatrix" );
-	envUniforms.push_back( "screenResolution" );
-	envUniforms.push_back( "drawMode" );
-	if( !pEnvProgram->initializeProgram( L"environment", pEnvVert, NULL, pEnvFrag, envUniforms ) )
+	uniforms.push_back( "MVPMatrix" );
+	uniforms.push_back( "screenResolution" );
+	uniforms.push_back( "drawMode" );
+	if( !this->createAndLoadProgram( L"environment", true, false, true, uniforms, attribLocations ) )
 		return false;
-	m_shaderPrograms.insert( std::pair<std::wstring, CShaderProgram*>( pEnvProgram->getName(), pEnvProgram ) );
-
+	uniforms.clear();
+	attribLocations.clear();
 	// Interface
-	pIntProgram = new CShaderProgram();
-	intUniforms.push_back( "MVPMatrix" );
-	if( !pIntProgram->initializeProgram( L"interface", pIntVert, pIntGeom, pIntFrag, intUniforms ) )
+	uniforms.push_back( "MVPMatrix" );
+	attribLocations.push_back( std::pair<int, std::string>( 0, "in_pos" ) );
+	attribLocations.push_back( std::pair<int, std::string>( 1, "in_tex" ) );
+	attribLocations.push_back( std::pair<int, std::string>( 2, "textureId" ) );
+	if( !this->createAndLoadProgram( L"interface", true, true, true, uniforms, attribLocations ) )
 		return false;
-	this->bind( pIntProgram );
-	m_shaderPrograms.insert( std::pair<std::wstring, CShaderProgram*>( pIntProgram->getName(), pIntProgram ) );
-
+	uniforms.clear();
+	attribLocations.clear();
 	// Sprite
-	pSpriteProgram = new CShaderProgram();
-	spriteUniforms.push_back( "MVPMatrix" );
-	if( !pSpriteProgram->initializeProgram( L"sprite", pSpriteVert, pSpriteGeom, pSpriteFrag, spriteUniforms ) )
+	uniforms.push_back( "MVPMatrix" );
+	uniforms.push_back( "tex2dsampler" );
+	attribLocations.push_back( std::pair<int, std::string>( 0, "in_pos" ) );
+	attribLocations.push_back( std::pair<int, std::string>( 1, "in_size" ) );
+	attribLocations.push_back( std::pair<int, std::string>( 2, "layer" ) );
+	attribLocations.push_back( std::pair<int, std::string>( 3, "in_texcoords" ) );
+	if( !this->createAndLoadProgram( L"sprite", true, true, true, uniforms, attribLocations ) )
 		return false;
-	this->bind( pSpriteProgram );
-	m_shaderPrograms.insert( std::pair<std::wstring, CShaderProgram*>( pSpriteProgram->getName(), pSpriteProgram ) );
-
-
-	DestroyDelete( pBaseVert );
-	DestroyDelete( pBaseFrag );
-	DestroyDelete( pDebugVert );
-	DestroyDelete( pDebugFrag );
-	DestroyDelete( pEnvVert );
-	DestroyDelete( pEnvFrag );
-	DestroyDelete( pIntVert );
-	DestroyDelete( pIntGeom );
-	DestroyDelete( pIntFrag );
-	DestroyDelete( pSpriteVert );
-	DestroyDelete( pSpriteGeom );
-	DestroyDelete( pSpriteFrag );
+	uniforms.clear();
+	attribLocations.clear();
+	this->bind( this->getShaderProgram( L"sprite" ) );
+	glUniform1i( this->getShaderProgram( L"sprite" )->getUniform( "tex2dsampler" ), 0 );
 
 	return true;
 }

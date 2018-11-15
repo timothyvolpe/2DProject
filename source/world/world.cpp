@@ -197,13 +197,13 @@ bool CWorld::initialize()
 	std::uniform_real_distribution<float> dist( 0.0f, 15.0f );
 	std::uniform_real_distribution<float> size( 0.5f, 1.0f );
 	std::uniform_int_distribution<int> gen( 1, 500 );
-	for( int i = 0; i < 4000; i++ )
+	for( int i = 0; i < 1000; i++ )
 	{
 		SpriteData sd;
 		sd.position = glm::vec2( CHUNK_HEIGHT_UNITS*6+dist( mt ), CHUNK_HEIGHT_UNITS*6+dist( mt ) );
 		sd.rotation = glm::vec2( 0.0f, 0.0f );
 		sd.size = glm::vec2( size( mt ), size( mt ) );
-		sd.layer = LAYER_PLAYER;
+		sd.layer = 100;
 		sd.texcoords = m_pItemsTilemap->getTileCoords( 0 );
 		TestSpriteData.push_back( sd );
 	}
@@ -264,6 +264,7 @@ bool CWorld::loadTilemaps()
 	if( !m_pLivingTilemap->binPackTilemap( DEFAULT_TILEMAPSIZE ) )
 		return false;
 	// Item tiles
+	m_pItemsTilemap->addTile( L"dev\\crate02.png" );
 	m_pItemsTilemap->addTile( L"dev\\key.png" );
 	if( !m_pItemsTilemap->binPackTilemap( DEFAULT_TILEMAPSIZE ) )
 		return false;
@@ -431,27 +432,6 @@ void CWorld::update( double deltaT )
 	std::uniform_int_distribution<int> gen( 1, 500 );
 
 	this->checkKeypresses( deltaT );
-
-	// Sprite stress test
-	/*if( gen( mt ) == 250 )
-	{
-		// Add a test sprite
-		SpriteData sd;
-		sd.position = glm::vec2( CHUNK_HEIGHT_UNITS*6+dist( mt ), CHUNK_HEIGHT_UNITS*6+dist( mt ) );
-		sd.rotation = glm::vec2( 0.0f, 0.0f );
-		sd.size = glm::vec2( size( mt ), size( mt ) );
-		sd.layer = LAYER_PLAYER;
-		m_pSpriteManager->addSprite( sd, m_pItemsTilemap->getBatchId() );
-	}
-	else
-	{
-		int scount = m_pSpriteManager->getSpriteCount( m_pItemsTilemap->getBatchId() );
-		if( scount > 0 ) {
-			std::uniform_int_distribution<int> delsp( 0, scount-1 );
-			int randomIndex = delsp( mt );
-			m_pSpriteManager->deleteSprite( m_pItemsTilemap->getBatchId(), randomIndex );
-		}
-	}*/
 
 	// Only update if we've exceeded PHYSICAL_WORLD_TICK  
 	m_timeSinceLastUpdate += deltaT;

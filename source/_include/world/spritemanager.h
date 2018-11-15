@@ -7,8 +7,9 @@
 typedef struct {
 	glm::vec2 pos;
 	glm::vec2 size;
-	unsigned char layer;
 	glm::lowp_uvec4 texcoords;
+	unsigned char layer;
+	unsigned char unused1[6];	// pad to 32 bytes
 } SpriteVertex;
 #pragma pack(pop)
 
@@ -19,23 +20,18 @@ struct SpriteData
 	glm::vec2 size;
 	glm::lowp_uvec4 texcoords;
 	unsigned char layer;
-	bool invalid;
 };
 
 struct SpriteBatch
 {
 	GLuint vao;
 	GLuint vertex_vbo;
-	GLuint invalid_count;
-	GLuint vertex_count;
 	int chunk_count;
 
 	std::vector<SpriteData> sprites;
-	std::vector<SpriteData> new_sprites;
-	std::vector<std::pair<int, SpriteData>> update_sprites;
 };
 
-SpriteVertex CopySpriteData( SpriteData& data );
+SpriteVertex CopySpriteVertex( SpriteData& data );
 
 class CSpriteManager
 {

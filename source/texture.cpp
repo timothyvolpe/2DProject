@@ -1,6 +1,8 @@
 #include "base.h"
 #include "texture.h"
 
+GLushort MaxShort = (~((GLushort)0));
+
 /////////////////
 // ImagePacker //
 /////////////////
@@ -353,7 +355,7 @@ bool CTextureTilemap::binPackTilemap( int size )
 	std::vector<CTextureTilemap::TextureTile*> tileData;
 	BinNode *pRootNode, *pPickedBin;
 	std::vector<GLubyte> tileMapData;
-	glm::lowp_uvec4 normalizedCoords;
+	glm::vec4 normalizedCoords;
 
 	assert( size );
 	m_mapSize = size;
@@ -378,9 +380,13 @@ bool CTextureTilemap::binPackTilemap( int size )
 		// Put tile in bin
 		pPickedBin->pTileStored = (*it);
 		// Add coords
-		normalizedCoords = glm::vec4( (float)pPickedBin->left / m_mapSize, (float)pPickedBin->top / m_mapSize, (float)(pPickedBin->left+pPickedBin->width) / m_mapSize, (float)(pPickedBin->top+pPickedBin->height) / m_mapSize );
+		normalizedCoords.x = (float)pPickedBin->left / m_mapSize;
+		normalizedCoords = glm::vec4(	(float)pPickedBin->left / m_mapSize,
+										(float)pPickedBin->top / m_mapSize, 
+										(float)(pPickedBin->left+pPickedBin->width) / m_mapSize,
+										(float)(pPickedBin->top+pPickedBin->height) / m_mapSize );
 		// Map to all possible vlaues of GLushort
-		m_tileCoordTable.push_back( normalizedCoords * glm::lowp_uvec4( (~((GLushort)0)) ) );
+		m_tileCoordTable.push_back( glm::lowp_uvec4( normalizedCoords * MaxShort ) );
 		// Add to lookup table
 		m_tileIndexTable.insert( std::pair<std::wstring, unsigned short>( (*it)->name, (unsigned short)m_tileIndexTable.size() ) );
 	}
