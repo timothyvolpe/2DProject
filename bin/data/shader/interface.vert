@@ -6,7 +6,7 @@ in uint textureId;
 out vec4 qColor;
 
 uniform mat4 MVPMatrix;
-uniform float layerSize;
+uniform float layerSize = 0.1f;
 
 void main()
 {

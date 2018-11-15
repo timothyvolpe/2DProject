@@ -266,7 +266,7 @@ void CInterfaceManager::allocateQuadBuffer()
 	// Reallocate the new buffer of the proper size
 	glVertexAttribIPointer( 0, 2, GL_UNSIGNED_SHORT, sizeof( InterfaceVertex ), (GLvoid*)offsetof( InterfaceVertex, posx ) );
 	glVertexAttribPointer( 1, 2, GL_UNSIGNED_SHORT, GL_TRUE, sizeof( InterfaceVertex ), (GLvoid*)offsetof( InterfaceVertex, texu ) );
-	glVertexAttribIPointer( 1, 1, GL_UNSIGNED_BYTE, sizeof( InterfaceVertex ), (GLvoid*)offsetof( InterfaceVertex, textureId ) );
+	glVertexAttribIPointer( 2, 1, GL_UNSIGNED_BYTE, sizeof( InterfaceVertex ), (GLvoid*)offsetof( InterfaceVertex, textureId ) );
 	glEnableVertexAttribArray( 0 );
 	glEnableVertexAttribArray( 1 );
 	glEnableVertexAttribArray( 2 );

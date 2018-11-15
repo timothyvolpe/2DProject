@@ -29,8 +29,7 @@ private:
 	bool m_bRunning;
 
 	boost::timer::cpu_timer m_gameTimer;
-	boost::chrono::duration<double> m_lastFrameTime;
-	double m_frameTime;
+	double m_frameTimeMS;
 
 	CGame();
 	~CGame();

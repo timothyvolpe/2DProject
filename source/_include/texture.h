@@ -114,9 +114,10 @@ private:
 	std::vector<std::wstring> m_tileQueue;
 
 	std::map<std::wstring, unsigned short> m_tileIndexTable;
-	std::vector<glm::vec4> m_tileCoordTable;
+	std::vector<glm::lowp_uvec4> m_tileCoordTable;
 
 	int m_mapSize;
+	int m_batchId;
 
 	static std::vector<TextureTile*> GenerateTileData( std::vector<std::wstring>& tileQueue );
 	static void RenderAndDeleteBin( BinNode **pNode, std::vector<GLubyte> &tileMapData, int size );
@@ -134,9 +135,12 @@ public:
 	void addTile( std::wstring relativePath );
 	bool binPackTilemap( int size );
 
-	glm::vec4 getTileCoords( unsigned short index );
+	glm::lowp_uvec4 getTileCoords( unsigned short index );
 
 	unsigned short getTileIndex( std::wstring path );
 
 	GLuint getTextureId() const;
+
+	int getBatchId();
+	void setBatchId( int id );
 };

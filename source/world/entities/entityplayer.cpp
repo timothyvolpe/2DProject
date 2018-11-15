@@ -140,7 +140,7 @@ void CEntityPlayer::onPhysTick( double deltaT )
 	targetVelocity = b2Vec2( 0, 0 );
 
 	if( m_movementFlags & MOVEMENTSTATE_JUMP && m_iWalkableSurfacesContacting > 0 && m_jumpCooldown <= 0 ) {
-		jumpImpulse = m_pPlayerBody->GetMass() * 7.0f;
+		jumpImpulse = m_pPlayerBody->GetMass() * 3.0f;
 		m_pPlayerBody->ApplyLinearImpulse( b2Vec2( 0, jumpImpulse ), m_pPlayerBody->GetWorldCenter(), true );
 		m_jumpCooldown = PLAYER_JUMP_COOLDOWN;
 	}

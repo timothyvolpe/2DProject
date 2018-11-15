@@ -73,19 +73,6 @@ bool CEntityPlatform::onActivate()
 		m_pPlatformTexture = CGame::getInstance().getInterfaceManager()->getFont( L"DEFAULT_FONT" )->getFontMap();
 		return true;
 	}
-	if( m_texturePath == L"#MAP" ) {
-		CTextureTilemap *pTestTileMap = new CTextureTilemap();
-		pTestTileMap->addTile( L"dev\\crate01.png" );
-		pTestTileMap->addTile( L"dev\\crate02.png" );
-		pTestTileMap->addTile( L"dev\\key.png" );
-		pTestTileMap->addTile( L"dev\\player.png" );
-		pTestTileMap->addTile( L"dev\\platform.png" );
-		pTestTileMap->addTile( L"dev\\testform.png" );
-		pTestTileMap->addTile( L"dev\\vertical.png" );
-		pTestTileMap->binPackTilemap( 256 );
-		m_pPlatformTexture = pTestTileMap;
-		return true;
-	}
 	else {
 		m_pPlatformTexture = CGame::getInstance().getGraphics()->getTextureManager()->loadTexture2D( m_texturePath, textureDesc );
 		if( !m_pPlatformTexture )

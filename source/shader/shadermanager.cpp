@@ -41,8 +41,9 @@ bool CShaderManager::loadPrograms()
 {
 	// Load test programs
 	CShaderObject *pBaseVert, *pBaseFrag, *pDebugVert, *pDebugFrag, *pEnvVert, *pEnvFrag, *pIntVert, *pIntGeom, *pIntFrag;
-	std::vector<std::string> baseUniforms, debugUniforms, envUniforms, intUniforms;
-	CShaderProgram *pBaseProgram, *pDebugProgram, *pEnvProgram, *pIntProgram;
+	CShaderObject *pSpriteVert, *pSpriteGeom, *pSpriteFrag;
+	std::vector<std::string> baseUniforms, debugUniforms, envUniforms, intUniforms, spriteUniforms;
+	CShaderProgram *pBaseProgram, *pDebugProgram, *pEnvProgram, *pIntProgram, *pSpriteProgram;
 
 	pBaseVert = new CShaderObject();
 	if( !pBaseVert->initializeShader( L"base", GL_VERTEX_SHADER ) )
@@ -70,6 +71,15 @@ bool CShaderManager::loadPrograms()
 		return false;
 	pIntFrag = new CShaderObject();
 	if( !pIntFrag->initializeShader( L"interface", GL_FRAGMENT_SHADER ) )
+		return false;
+	pSpriteVert = new CShaderObject();
+	if( !pSpriteVert->initializeShader( L"sprite", GL_VERTEX_SHADER ) )
+		return false;
+	pSpriteGeom = new CShaderObject();
+	if( !pSpriteGeom->initializeShader( L"sprite", GL_GEOMETRY_SHADER ) )
+		return false;
+	pSpriteFrag = new CShaderObject();
+	if( !pSpriteFrag->initializeShader( L"sprite", GL_FRAGMENT_SHADER ) )
 		return false;
 
 	// Base
@@ -101,12 +111,19 @@ bool CShaderManager::loadPrograms()
 	// Interface
 	pIntProgram = new CShaderProgram();
 	intUniforms.push_back( "MVPMatrix" );
-	intUniforms.push_back( "layerSize" );
 	if( !pIntProgram->initializeProgram( L"interface", pIntVert, pIntGeom, pIntFrag, intUniforms ) )
 		return false;
 	this->bind( pIntProgram );
-	glUniform1f( pIntProgram->getUniform( "layerSize" ), LAYER_SIZE );
 	m_shaderPrograms.insert( std::pair<std::wstring, CShaderProgram*>( pIntProgram->getName(), pIntProgram ) );
+
+	// Sprite
+	pSpriteProgram = new CShaderProgram();
+	spriteUniforms.push_back( "MVPMatrix" );
+	if( !pSpriteProgram->initializeProgram( L"sprite", pSpriteVert, pSpriteGeom, pSpriteFrag, spriteUniforms ) )
+		return false;
+	this->bind( pSpriteProgram );
+	m_shaderPrograms.insert( std::pair<std::wstring, CShaderProgram*>( pSpriteProgram->getName(), pSpriteProgram ) );
+
 
 	DestroyDelete( pBaseVert );
 	DestroyDelete( pBaseFrag );
@@ -117,6 +134,9 @@ bool CShaderManager::loadPrograms()
 	DestroyDelete( pIntVert );
 	DestroyDelete( pIntGeom );
 	DestroyDelete( pIntFrag );
+	DestroyDelete( pSpriteVert );
+	DestroyDelete( pSpriteGeom );
+	DestroyDelete( pSpriteFrag );
 
 	return true;
 }

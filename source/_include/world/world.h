@@ -22,6 +22,8 @@ class CEnvironment;
 
 class CTextureTilemap;
 
+class CSpriteManager;
+
 class CChunkManager;
 class CBlock;
 class CBlockTerrain;
@@ -59,6 +61,8 @@ private:
 	CEntityPlayer *m_pLocalPlayer;
 	CEnvironment *m_pEnvironment;
 
+	CSpriteManager *m_pSpriteManager;
+
 	glm::vec2 m_cameraPosition;
 
 	CEntityArraySortable<CEntityRenderable> *m_pDrawArray;
@@ -76,7 +80,10 @@ private:
 	CChunkManager *m_pChunkManager;
 
 	BlockMap m_registeredBlocks;
+
 	CTextureTilemap *m_pBlockTilemap;
+	CTextureTilemap *m_pLivingTilemap;
+	CTextureTilemap *m_pItemsTilemap;
 
 	CBlockTerrain *m_pBlockStone;
 	CBlockTerrain *m_pBlockDirt;

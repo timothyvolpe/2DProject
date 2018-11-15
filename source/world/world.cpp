@@ -1,3 +1,5 @@
+#include <random>
+
 #include "graphics.h"
 #include "base.h"
 #include "shader\shader.h"
@@ -16,6 +18,7 @@
 #include "world\physlistener.h"
 
 #include "world\environment.h"
+#include "world\spritemanager.h"
 
 #include "world\chunkmanager.h"
 #include "world\chunk.h"
@@ -23,6 +26,8 @@
 #include "blocks\blockterrain.h"
 
 #include "world\terraingen\terraingen.h"
+
+std::vector<SpriteData> TestSpriteData;
 
 CWorld::CWorld()
 {
@@ -40,7 +45,11 @@ CWorld::CWorld()
 	m_pChunkManager = 0;
 	m_pEnvironment = 0;
 	m_pTerrainGenerator = 0;
+	m_pSpriteManager = 0;
+
 	m_pBlockTilemap = 0;
+	m_pLivingTilemap = 0;
+	m_pItemsTilemap = 0;
 
 	m_pBlockStone = 0;
 	m_pBlockDirt = 0;
@@ -94,12 +103,15 @@ bool CWorld::initialize()
 	if( !m_pStressArray->initialize() )
 		return false;
 
-	// Create texture tilemaps
-	m_pBlockTilemap = new CTextureTilemap();
-	if( !m_pBlockTilemap->initialize() )
+	// Create sprite manager
+	m_pSpriteManager = new CSpriteManager();
+	if( !this->m_pSpriteManager )
 		return false;
+
+	// Create texture tilemaps
 	if( !this->loadTilemaps() )
 		return false;
+
 	// Create blocks
 	if( !this->initBlocks() )
 		return false;
@@ -167,8 +179,7 @@ bool CWorld::initialize()
 		return false;
 	pCurrentPlatform->setPosition( glm::vec2( CHUNK_HEIGHT_UNITS*6-2, CHUNK_HEIGHT_UNITS*6+6 ) );
 	pCurrentPlatform->setDimensions( glm::vec2( 5.0f, 5.0f ) );
-	//pCurrentPlatform->setTexture( L"#FONT" );
-	pCurrentPlatform->setTexture( L"#MAP" );
+	pCurrentPlatform->setTexture( L"#FONT" );
 	pCurrentPlatform->setStatic( true );
 	pCurrentPlatform->activate();
 
@@ -179,6 +190,22 @@ bool CWorld::initialize()
 		pStressTest->setPosition( glm::vec2( CHUNK_HEIGHT_UNITS*6+1 + i * 0.1f, CHUNK_HEIGHT_UNITS*6+20 + ( i > 5 ? 0.2f : 0.0f ) ) );
 		pStressTest->setOpaque( false );
 		pStressTest->activate();
+	}
+
+	std::random_device rd;
+	std::mt19937 mt( rd() );
+	std::uniform_real_distribution<float> dist( 0.0f, 15.0f );
+	std::uniform_real_distribution<float> size( 0.5f, 1.0f );
+	std::uniform_int_distribution<int> gen( 1, 500 );
+	for( int i = 0; i < 4000; i++ )
+	{
+		SpriteData sd;
+		sd.position = glm::vec2( CHUNK_HEIGHT_UNITS*6+dist( mt ), CHUNK_HEIGHT_UNITS*6+dist( mt ) );
+		sd.rotation = glm::vec2( 0.0f, 0.0f );
+		sd.size = glm::vec2( size( mt ), size( mt ) );
+		sd.layer = LAYER_PLAYER;
+		sd.texcoords = m_pItemsTilemap->getTileCoords( 0 );
+		TestSpriteData.push_back( sd );
 	}
 
 	return true;
@@ -192,6 +219,8 @@ void CWorld::destroy()
 	// Delete blocks
 	this->destroyBlocks();
 	// Delete texture tilemaps
+	DestroyDelete( m_pItemsTilemap );
+	DestroyDelete( m_pLivingTilemap );
 	DestroyDelete( m_pBlockTilemap );
 	// Delete arrays
 	m_pDrawArray->clearArray( false );
@@ -203,6 +232,7 @@ void CWorld::destroy()
 	m_pStressArray->clearArray( true );
 	DestroyDelete( m_pStressArray );
 	m_pLocalPlayer = 0;
+	DestroyDelete( m_pSpriteManager );
 	// Destroy world
 	SafeDelete( m_pPhysWorld );
 	SafeDelete( m_pPhysListener );
@@ -210,11 +240,32 @@ void CWorld::destroy()
 
 bool CWorld::loadTilemaps()
 {
+	m_pBlockTilemap = new CTextureTilemap();
+	m_pBlockTilemap->setBatchId( m_pSpriteManager->createBatch() );
+	if( !m_pBlockTilemap->initialize() )
+		return false;
+	m_pLivingTilemap = new CTextureTilemap();
+	m_pLivingTilemap->setBatchId( m_pSpriteManager->createBatch() );
+	if( !m_pLivingTilemap->initialize() )
+		return false;
+	m_pItemsTilemap = new CTextureTilemap();
+	m_pItemsTilemap->setBatchId( m_pSpriteManager->createBatch() );
+	if( !m_pItemsTilemap->initialize() )
+		return false;
+
 	// Block tiles
 	m_pBlockTilemap->addTile( L"env\\stone.png" ); // 0
 	m_pBlockTilemap->addTile( L"env\\dirt.png" ); // 1
 	m_pBlockTilemap->addTile( L"env\\grass.png" ); // 2
 	if( !m_pBlockTilemap->binPackTilemap( DEFAULT_TILEMAPSIZE ) )
+		return false;
+	// Living tiles
+	m_pLivingTilemap->addTile( L"dev\\player.png" );
+	if( !m_pLivingTilemap->binPackTilemap( DEFAULT_TILEMAPSIZE ) )
+		return false;
+	// Item tiles
+	m_pItemsTilemap->addTile( L"dev\\key.png" );
+	if( !m_pItemsTilemap->binPackTilemap( DEFAULT_TILEMAPSIZE ) )
 		return false;
 
 	return true;
@@ -243,6 +294,7 @@ void CWorld::destroyBlocks()
 void CWorld::draw( glm::mat4& orthoMat )
 {
 	CShaderProgram *pBaseProgram = CGame::getInstance().getGraphics()->getShaderManager()->getShaderProgram( L"base" );
+	CShaderProgram *pSpriteProgram = CGame::getInstance().getGraphics()->getShaderManager()->getShaderProgram( L"sprite" );
 	CShaderProgram *pDebugProgram = CGame::getInstance().getGraphics()->getShaderManager()->getShaderProgram( L"debug" );
 	glm::mat4 modelMatrix, viewMatrix, mvpMatrix;
 
@@ -270,6 +322,17 @@ void CWorld::draw( glm::mat4& orthoMat )
 
 	StartGLDebug( "DrawWorld" );
 
+	// Render each 
+	CGame::getInstance().getGraphics()->getShaderManager()->bind( pSpriteProgram );
+	glPointSize( 5.0f );
+	mvpMatrix = orthoMat * viewMatrix;
+	glUniformMatrix4fv( pBaseProgram->getUniform( "MVPMatrix" ), 1, GL_FALSE, &mvpMatrix[0][0] );
+
+	for( auto it = TestSpriteData.begin(); it != TestSpriteData.end(); it++  )
+		m_pSpriteManager->drawSprite( m_pItemsTilemap->getBatchId(), (*it) );
+	m_pItemsTilemap->bind( 0 );
+	m_pSpriteManager->draw();
+
 	CGame::getInstance().getGraphics()->getShaderManager()->bind( pBaseProgram );
 	// Render chunks
 	for( auto it = m_pChunkManager->getChunksRendered().begin(); it != m_pChunkManager->getChunksRendered().end(); it++ )
@@ -282,7 +345,7 @@ void CWorld::draw( glm::mat4& orthoMat )
 			(*it2)->draw();
 		}
 	}
-	// Render each object
+
 	for( auto it = m_pDrawArray->getEntityList().begin(); it != m_pDrawArray->getEntityList().end(); it++ )
 	{
 		// Translate
@@ -361,11 +424,38 @@ void CWorld::checkKeypresses( double deltaT )
 }
 void CWorld::update( double deltaT )
 {
+	std::random_device rd;
+	std::mt19937 mt( rd() );
+	std::uniform_real_distribution<float> dist( 0.0f, 6.0f );
+	std::uniform_real_distribution<float> size( 0.4f, 2.0f );
+	std::uniform_int_distribution<int> gen( 1, 500 );
+
 	this->checkKeypresses( deltaT );
 
-	// Only update if we've exceeded PHYSICAL_WORLD_TICK
+	// Sprite stress test
+	/*if( gen( mt ) == 250 )
+	{
+		// Add a test sprite
+		SpriteData sd;
+		sd.position = glm::vec2( CHUNK_HEIGHT_UNITS*6+dist( mt ), CHUNK_HEIGHT_UNITS*6+dist( mt ) );
+		sd.rotation = glm::vec2( 0.0f, 0.0f );
+		sd.size = glm::vec2( size( mt ), size( mt ) );
+		sd.layer = LAYER_PLAYER;
+		m_pSpriteManager->addSprite( sd, m_pItemsTilemap->getBatchId() );
+	}
+	else
+	{
+		int scount = m_pSpriteManager->getSpriteCount( m_pItemsTilemap->getBatchId() );
+		if( scount > 0 ) {
+			std::uniform_int_distribution<int> delsp( 0, scount-1 );
+			int randomIndex = delsp( mt );
+			m_pSpriteManager->deleteSprite( m_pItemsTilemap->getBatchId(), randomIndex );
+		}
+	}*/
+
+	// Only update if we've exceeded PHYSICAL_WORLD_TICK  
 	m_timeSinceLastUpdate += deltaT;
-	if( m_timeSinceLastUpdate >= PHYSICAL_WORLD_TICK )
+	if( m_timeSinceLastUpdate / 1000.0 >= PHYSICAL_WORLD_TICK )
 	{
 		m_pPhysWorld->Step( PHYSICAL_WORLD_TICK, PHYSICAL_WORLD_VEL_IT, PHYSICAL_WORLD_POS_IT );
 		m_pPhysWorld->ClearForces();
@@ -377,6 +467,8 @@ void CWorld::update( double deltaT )
 	// Update objects
 	for( auto it = m_pDrawArray->getEntityList().begin(); it != m_pDrawArray->getEntityList().end(); it++ )
 		(*it)->onUpdate( deltaT );
+	// Update sprites
+	m_pSpriteManager->update( deltaT );
 }
 
 bool CWorld::registerBlock( CBlock *pBlock )

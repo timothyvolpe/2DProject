@@ -19,7 +19,7 @@ CGame::CGame()
 	m_pWorld = 0;
 	m_pInterfaceManager = 0;
 
-	m_frameTime = 0.0;
+	m_frameTimeMS = 0.0;
 
 	m_bRunning = false;
 }
@@ -35,7 +35,6 @@ bool CGame::initialize()
 
 	// Start the game timer
 	m_gameTimer.start();
-	m_lastFrameTime = boost::chrono::nanoseconds( m_gameTimer.elapsed().user );
 
 	// Validate the directories
 	if( !GameFilesystem::ValidateGameDir( FILESYSTEM_DIR_LOGS ) )
@@ -140,7 +139,7 @@ bool CGame::startGame()
 bool CGame::gameLoop()
 {
 	SDL_Event pollEvent;
-	boost::chrono::duration<double> currentFrameTime;
+	boost::chrono::microseconds currentFrameTimeUS;
 
 	m_bRunning = true;
 	while( m_bRunning )
@@ -161,11 +160,16 @@ bool CGame::gameLoop()
 		m_pGraphics->draw();
 		m_pGraphics->update();
 
-		currentFrameTime = boost::chrono::nanoseconds( m_gameTimer.elapsed().user );
-		m_frameTime = currentFrameTime.count() - m_lastFrameTime.count();
-		m_lastFrameTime = currentFrameTime;
+		// Get game time in microseconds
+		currentFrameTimeUS = boost::chrono::duration_cast<boost::chrono::microseconds>( boost::chrono::nanoseconds( m_gameTimer.elapsed().wall ) );
+		// Convert to double precision milliseconds
+		auto currentFrameTimeMill = boost::chrono::duration_cast<boost::chrono::duration<double, boost::ratio<1, 1000>>>( currentFrameTimeUS );
 
-		m_pWorld->update( m_frameTime );
+		m_frameTimeMS = currentFrameTimeMill.count();
+
+		m_gameTimer.start();
+
+		m_pWorld->update( m_frameTimeMS );
 		m_pInput->update();
 	}
 
@@ -215,5 +219,5 @@ FT_Library CGame::getFreeType() {
 }
 
 double CGame::getFrameTime() const {
-	return m_frameTime;
+	return m_frameTimeMS;
 }
