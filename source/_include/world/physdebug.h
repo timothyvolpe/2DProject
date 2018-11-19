@@ -2,8 +2,20 @@
 
 #include <Box2D\Box2D.h>
 
+#pragma pack(push, 4)
+typedef struct {
+	glm::vec2 pos;
+	glm::vec3 color;
+} DebugVertex;
+#pragma pack(pop)
+
 class CPhysicsDebugDraw : public b2Draw
 {
+private:
+	GLuint m_vaoId;
+	GLuint m_vboId;
+
+	DebugVertex* m_pVertexStorage;
 public:
 	CPhysicsDebugDraw();
 	~CPhysicsDebugDraw();

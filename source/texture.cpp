@@ -380,11 +380,10 @@ bool CTextureTilemap::binPackTilemap( int size )
 		// Put tile in bin
 		pPickedBin->pTileStored = (*it);
 		// Add coords
-		normalizedCoords.x = (float)pPickedBin->left / m_mapSize;
 		normalizedCoords = glm::vec4(	(float)pPickedBin->left / m_mapSize,
 										(float)pPickedBin->top / m_mapSize, 
-										(float)(pPickedBin->left+pPickedBin->width) / m_mapSize,
-										(float)(pPickedBin->top+pPickedBin->height) / m_mapSize );
+										(float)pPickedBin->width / m_mapSize,
+										(float)pPickedBin->height / m_mapSize );
 		// Map to all possible vlaues of GLushort
 		m_tileCoordTable.push_back( glm::lowp_uvec4( normalizedCoords * MaxShort ) );
 		// Add to lookup table
@@ -430,7 +429,7 @@ unsigned short CTextureTilemap::getTileIndex( std::wstring path ) {
 	auto it = m_tileIndexTable.find( path );
 	if( it != m_tileIndexTable.end() )
 		return (*it).second;
-	PrintWarn( L"Could not find texture \'%s\' in map", path.c_str() );
+	PrintWarn( L"Could not find texture \'%s\' in map\n", path.c_str() );
 	return 0;
 }
 

@@ -8,8 +8,6 @@ class CTexture;
 class CEntityPlatform : public CEntityRenderablePhysics
 {
 private:
-	CTexture *m_pPlatformTexture;
-
 	std::wstring m_texturePath;
 	bool m_bStatic;
 	glm::vec2 m_dimensions;

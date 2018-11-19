@@ -6,6 +6,7 @@
 #include "texture.h"
 #include "texturemanager.h"
 #include "world\world.h"
+#include "world\spritemanager.h"
 #include "renderutil.h"
 
 float CEntityPlayer::BaseMovementSpeed = 5.0f;
@@ -28,18 +29,18 @@ CEntityPlayer::~CEntityPlayer()
 {
 }
 
-bool CEntityPlayer::onCreate() {
+bool CEntityPlayer::onCreate()
+{
+	CWorld *pWorld =  CGame::getInstance().getWorld();
+	CTextureTilemap *pTilemap = pWorld->getSpriteBatchTilemap( SPRITE_BATCH_LIVING );
 
-	TextureDescriptor textureDesc;
-
-	// Load the player texture
-	textureDesc.magFilter = GL_NEAREST;
-	textureDesc.minFilter = GL_NEAREST;
-	textureDesc.wrapS = GL_CLAMP_TO_EDGE;
-	textureDesc.wrapT = GL_CLAMP_TO_EDGE;
-	textureDesc.useAlpha = true;
-	m_pPlayerTexture = CGame::getInstance().getGraphics()->getTextureManager()->loadTexture2D( L"dev\\player.png", textureDesc );
-	if( !m_pPlayerTexture )
+	// Get texture and batch info
+	if( pTilemap ) {
+		unsigned short tileIndex = pTilemap->getTileIndex( L"dev\\player.png" );
+		this->setSpriteBatch( pTilemap->getBatchId() );
+		this->setSpriteTile( tileIndex, pTilemap->getTileCoords( tileIndex ) );
+	}
+	else
 		return false;
 
 	return true;
@@ -90,17 +91,21 @@ bool CEntityPlayer::onActivate()
 	return true;
 }
 
-void CEntityPlayer::onDraw() {
+void CEntityPlayer::onDraw()
+{
 	float playerSize;
 	glm::vec2 screenOffset;
-
-	// Bind texture
-	m_pPlayerTexture->bind( 0 );
+	SpriteData sd;
 
 	playerSize = PLAYER_SPRITE_SIZE * m_fPlayerScale;
 
 	// Draw a box
-	CRenderUtil::drawSpriteTextured( glm::vec2( 0.0f, 0.0f ), glm::vec2( playerSize, playerSize ), glm::vec4( 0.0f, 0.0f, 1.0f, 1.0f ) );
+	sd.layer = LAYER_PLAYER;
+	sd.position = this->getPosition();
+	sd.rotation = 0.0f;
+	sd.size = glm::vec2( playerSize );
+	sd.texcoords = this->getTextureTileCoords();
+	CGame::getInstance().getWorld()->getSpriteManager()->drawSprite( this->getBatchId(), sd );
 }
 
 void CEntityPlayer::performMovement( double deltaT )
@@ -120,13 +125,14 @@ void CEntityPlayer::performMovement( double deltaT )
 }
 void CEntityPlayer::onUpdate( double deltaT )
 {
-	glm::vec2 screenOffset;
+	float playerSizeOffset;
 
 	// Check for movement commands
 	if( m_bControlledPlayer )
 		this->performMovement( deltaT );
 	// Move sprite to physics
-	this->setPosition( m_pPlayerBody->GetPosition() );
+	playerSizeOffset = (PLAYER_SPRITE_SIZE * m_fPlayerScale)/2;
+	this->setPosition( m_pPlayerBody->GetPosition() + b2Vec2( playerSizeOffset, playerSizeOffset ) );
 }
 void CEntityPlayer::onPhysTick( double deltaT )
 {

@@ -4,10 +4,10 @@
 #include "texture.h"
 #include "texturemanager.h"
 #include "world\world.h"
+#include "world\spritemanager.h"
 #include "renderutil.h"
 
 CEntityStress::CEntityStress() {
-	m_pTexture = 0;
 	m_pFixture = 0;
 	m_pBody = 0;
 	m_dimensions = glm::vec2( 0.4f, 0.2f );
@@ -17,6 +17,18 @@ CEntityStress::~CEntityStress() {
 
 bool CEntityStress::onCreate()
 {
+	CWorld *pWorld =  CGame::getInstance().getWorld();
+	CTextureTilemap *pTilemap = pWorld->getSpriteBatchTilemap( SPRITE_BATCH_ITEMS );
+
+	// Get texture and batch info
+	if( pTilemap ) {
+		unsigned short tileIndex = pTilemap->getTileIndex( L"dev\\key.png" );
+		this->setSpriteBatch( pTilemap->getBatchId() );
+		this->setSpriteTile( tileIndex, pTilemap->getTileCoords( tileIndex ) );
+	}
+	else
+		return false;
+
 	return true;
 }
 void CEntityStress::onDestroy()
@@ -52,17 +64,6 @@ bool CEntityStress::onActivate()
 	fixtureDef.restitution = 0.2f;
 	m_pFixture = m_pBody->CreateFixture( &fixtureDef );
 
-	// Load the texture
-	textureDesc.magFilter = GL_NEAREST;
-	textureDesc.minFilter = GL_NEAREST;
-	textureDesc.wrapS = GL_CLAMP_TO_EDGE;
-	textureDesc.wrapT = GL_CLAMP_TO_EDGE;
-	textureDesc.useAlpha = !this->isOpaque();
-	textureDesc.monochrome = false;
-	m_pTexture = CGame::getInstance().getGraphics()->getTextureManager()->loadTexture2D( L"dev\\key.png", textureDesc );
-	if( !m_pTexture )
-		return false;
-
 	this->setOrigin( m_dimensions / 2.0f );
 
 	return true;
@@ -71,8 +72,7 @@ bool CEntityStress::onActivate()
 void CEntityStress::onDraw()
 {
 	float keyWidth, keyHeight;
-
-	m_pTexture->bind( 0 );
+	SpriteData sd;
 
 	this->setPosition( m_pBody->GetPosition() );
 	this->setRotation( m_pBody->GetAngle() * (180 / PI_CONSTANT) );
@@ -80,6 +80,10 @@ void CEntityStress::onDraw()
 	keyWidth = 0.2f;
 	keyHeight = 0.1f;
 
-	// Draw a box
-	CRenderUtil::drawSpriteTextured( glm::vec2( 0.0f, 0.0f ), m_dimensions, glm::vec4( 0.0f, 0.0f, 1.0f, 1.0f ) );
+	sd.layer = LAYER_PLAYER;
+	sd.position = this->getPosition();
+	sd.rotation = this->getRotation();
+	sd.size = m_dimensions;
+	sd.texcoords = this->getTextureTileCoords();
+	CGame::getInstance().getWorld()->getSpriteManager()->drawSprite( this->getBatchId(), sd );
 }

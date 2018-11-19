@@ -47,9 +47,9 @@ CWorld::CWorld()
 	m_pTerrainGenerator = 0;
 	m_pSpriteManager = 0;
 
-	m_pBlockTilemap = 0;
-	m_pLivingTilemap = 0;
-	m_pItemsTilemap = 0;
+	m_pTilemapBlocks = 0;
+	m_pTilemapLiving = 0;
+	m_pTilemapItems = 0;
 
 	m_pBlockStone = 0;
 	m_pBlockDirt = 0;
@@ -197,14 +197,14 @@ bool CWorld::initialize()
 	std::uniform_real_distribution<float> dist( 0.0f, 15.0f );
 	std::uniform_real_distribution<float> size( 0.5f, 1.0f );
 	std::uniform_int_distribution<int> gen( 1, 500 );
-	for( int i = 0; i < 1000; i++ )
+	for( int i = 0; i < 100; i++ )
 	{
 		SpriteData sd;
 		sd.position = glm::vec2( CHUNK_HEIGHT_UNITS*6+dist( mt ), CHUNK_HEIGHT_UNITS*6+dist( mt ) );
-		sd.rotation = glm::vec2( 0.0f, 0.0f );
+		sd.rotation = 0.0f;
 		sd.size = glm::vec2( size( mt ), size( mt ) );
 		sd.layer = 100;
-		sd.texcoords = m_pItemsTilemap->getTileCoords( 0 );
+		sd.texcoords = m_pTilemapItems->getTileCoords( 0 );
 		TestSpriteData.push_back( sd );
 	}
 
@@ -219,9 +219,9 @@ void CWorld::destroy()
 	// Delete blocks
 	this->destroyBlocks();
 	// Delete texture tilemaps
-	DestroyDelete( m_pItemsTilemap );
-	DestroyDelete( m_pLivingTilemap );
-	DestroyDelete( m_pBlockTilemap );
+	DestroyDelete( m_pTilemapItems );
+	DestroyDelete( m_pTilemapLiving );
+	DestroyDelete( m_pTilemapBlocks );
 	// Delete arrays
 	m_pDrawArray->clearArray( false );
 	DestroyDelete( m_pDrawArray );
@@ -240,33 +240,38 @@ void CWorld::destroy()
 
 bool CWorld::loadTilemaps()
 {
-	m_pBlockTilemap = new CTextureTilemap();
-	m_pBlockTilemap->setBatchId( m_pSpriteManager->createBatch() );
-	if( !m_pBlockTilemap->initialize() )
+	m_pTilemapBlocks = new CTextureTilemap();
+	if( !m_pTilemapBlocks->initialize() )
 		return false;
-	m_pLivingTilemap = new CTextureTilemap();
-	m_pLivingTilemap->setBatchId( m_pSpriteManager->createBatch() );
-	if( !m_pLivingTilemap->initialize() )
+	m_pTilemapBlocks->setBatchId( m_pSpriteManager->createBatch() );
+	m_pTilemapLiving = new CTextureTilemap();
+	if( !m_pTilemapLiving->initialize() )
 		return false;
-	m_pItemsTilemap = new CTextureTilemap();
-	m_pItemsTilemap->setBatchId( m_pSpriteManager->createBatch() );
-	if( !m_pItemsTilemap->initialize() )
+	m_pTilemapLiving->setBatchId( m_pSpriteManager->createBatch() );
+	m_pTilemapItems = new CTextureTilemap();
+	if( !m_pTilemapItems->initialize() )
 		return false;
+	m_pTilemapItems->setBatchId( m_pSpriteManager->createBatch() );
+	
 
 	// Block tiles
-	m_pBlockTilemap->addTile( L"env\\stone.png" ); // 0
-	m_pBlockTilemap->addTile( L"env\\dirt.png" ); // 1
-	m_pBlockTilemap->addTile( L"env\\grass.png" ); // 2
-	if( !m_pBlockTilemap->binPackTilemap( DEFAULT_TILEMAPSIZE ) )
+	m_pTilemapBlocks->addTile( L"env\\stone.png" ); 
+	m_pTilemapBlocks->addTile( L"env\\dirt.png" ); 
+	m_pTilemapBlocks->addTile( L"env\\grass.png" );
+	m_pTilemapBlocks->addTile( L"dev\\crate01.png" );
+	m_pTilemapBlocks->addTile( L"dev\\crate02.png" );
+	if( !m_pTilemapBlocks->binPackTilemap( DEFAULT_TILEMAPSIZE ) )
 		return false;
 	// Living tiles
-	m_pLivingTilemap->addTile( L"dev\\player.png" );
-	if( !m_pLivingTilemap->binPackTilemap( DEFAULT_TILEMAPSIZE ) )
+	m_pTilemapLiving->addTile( L"dev\\player.png" );
+	m_pTilemapLiving->addTile( L"dev\\platform.png" );
+	if( !m_pTilemapLiving->binPackTilemap( DEFAULT_TILEMAPSIZE ) )
 		return false;
 	// Item tiles
-	m_pItemsTilemap->addTile( L"dev\\crate02.png" );
-	m_pItemsTilemap->addTile( L"dev\\key.png" );
-	if( !m_pItemsTilemap->binPackTilemap( DEFAULT_TILEMAPSIZE ) )
+	m_pTilemapItems->addTile( L"dev\\crate02.png" );
+	m_pTilemapItems->addTile( L"dev\\key.png" );
+	m_pTilemapItems->addTile( L"dev\\platform.png" );
+	if( !m_pTilemapItems->binPackTilemap( DEFAULT_TILEMAPSIZE ) )
 		return false;
 
 	return true;
@@ -274,13 +279,13 @@ bool CWorld::loadTilemaps()
 bool CWorld::initBlocks()
 {
 	m_pBlockStone = new CBlockTerrain( BLOCK_ID_STONE );
-	m_pBlockStone->setTextureIndex( m_pBlockTilemap->getTileIndex( L"env\\stone.png" ) );
+	m_pBlockStone->setTextureIndex( m_pTilemapBlocks->getTileIndex( L"env\\stone.png" ) );
 	this->registerBlock( m_pBlockStone );
 	m_pBlockDirt = new CBlockTerrain( BLOCK_ID_DIRT );
-	m_pBlockDirt->setTextureIndex( m_pBlockTilemap->getTileIndex( L"env\\dirt.png" ) );
+	m_pBlockDirt->setTextureIndex( m_pTilemapBlocks->getTileIndex( L"env\\dirt.png" ) );
 	this->registerBlock( m_pBlockDirt );
 	m_pBlockGrass = new CBlockTerrain( BLOCK_ID_GRASS );
-	m_pBlockGrass->setTextureIndex( m_pBlockTilemap->getTileIndex( L"env\\grass.png" ) );
+	m_pBlockGrass->setTextureIndex( m_pTilemapBlocks->getTileIndex( L"env\\grass.png" ) );
 	this->registerBlock( m_pBlockGrass );
 
 	return true;
@@ -305,7 +310,7 @@ void CWorld::draw( glm::mat4& orthoMat )
 		glm::vec2 screenOffset;
 		float playerSize;
 
-		playerSize = PLAYER_SPRITE_SIZE * m_pLocalPlayer->getPlayerScale();
+		playerSize = (PLAYER_SPRITE_SIZE * m_pLocalPlayer->getPlayerScale())/2;
 		screenOffset = glm::vec2( CGame::getInstance().getConfig()->m_resolutionX / 2.0f / CGame::getInstance().getGraphics()->getPixelsPerMeter() - (playerSize/2.0f), CGame::getInstance().getConfig()->m_resolutionY / 2.0f / CGame::getInstance().getGraphics()->getPixelsPerMeter() - (playerSize/2.0f) );
 		this->setCameraPosition( m_pLocalPlayer->getPosition() - screenOffset );
 	}
@@ -323,17 +328,6 @@ void CWorld::draw( glm::mat4& orthoMat )
 
 	StartGLDebug( "DrawWorld" );
 
-	// Render each 
-	CGame::getInstance().getGraphics()->getShaderManager()->bind( pSpriteProgram );
-	glPointSize( 5.0f );
-	mvpMatrix = orthoMat * viewMatrix;
-	glUniformMatrix4fv( pBaseProgram->getUniform( "MVPMatrix" ), 1, GL_FALSE, &mvpMatrix[0][0] );
-
-	for( auto it = TestSpriteData.begin(); it != TestSpriteData.end(); it++  )
-		m_pSpriteManager->drawSprite( m_pItemsTilemap->getBatchId(), (*it) );
-	m_pItemsTilemap->bind( 0 );
-	m_pSpriteManager->draw();
-
 	CGame::getInstance().getGraphics()->getShaderManager()->bind( pBaseProgram );
 	// Render chunks
 	for( auto it = m_pChunkManager->getChunksRendered().begin(); it != m_pChunkManager->getChunksRendered().end(); it++ )
@@ -345,7 +339,7 @@ void CWorld::draw( glm::mat4& orthoMat )
 			glUniformMatrix4fv( pBaseProgram->getUniform( "MVPMatrix" ), 1, GL_FALSE, &mvpMatrix[0][0] );
 			(*it2)->draw();
 		}
-	}
+	}                                             
 
 	for( auto it = m_pDrawArray->getEntityList().begin(); it != m_pDrawArray->getEntityList().end(); it++ )
 	{
@@ -360,6 +354,22 @@ void CWorld::draw( glm::mat4& orthoMat )
 		glUniformMatrix4fv( pBaseProgram->getUniform( "MVPMatrix" ), 1, GL_FALSE, &mvpMatrix[0][0] );
 		(*it)->onDraw();
 	}
+
+	for( auto it = TestSpriteData.begin(); it != TestSpriteData.end(); it++ )
+		m_pSpriteManager->drawSprite( m_pTilemapItems->getBatchId(), (*it) );
+
+	// Draw sprites
+	CGame::getInstance().getGraphics()->getShaderManager()->bind( pSpriteProgram );
+	mvpMatrix = orthoMat * viewMatrix;
+	glUniformMatrix4fv( pBaseProgram->getUniform( "MVPMatrix" ), 1, GL_FALSE, &mvpMatrix[0][0] );
+	// Draw each batch of sprite
+	m_pTilemapBlocks->bind( 0 );
+	m_pSpriteManager->draw( m_pTilemapBlocks->getBatchId() );
+	m_pTilemapItems->bind( 0 );
+	m_pSpriteManager->draw( m_pTilemapItems->getBatchId() );
+	m_pTilemapLiving->bind( 0 );
+	m_pSpriteManager->draw( m_pTilemapLiving->getBatchId() );
+	
 
 	// Debug drawing
 	if( m_bDebugDraw )
@@ -478,11 +488,29 @@ CTerrainGenerator* CWorld::getTerrainGenerator() {
 	return m_pTerrainGenerator;
 }
 CTextureTilemap* CWorld::getBlockTilemap() {
-	return m_pBlockTilemap;
+	return m_pTilemapBlocks;
 }
 glm::vec2 CWorld::getCameraPosition() const {
 	return m_cameraPosition;
 }
 void CWorld::setCameraPosition( glm::vec2 cameraPosition ) {
 	m_cameraPosition = cameraPosition;
+}
+CSpriteManager* CWorld::getSpriteManager() {
+	return m_pSpriteManager;
+}
+CTextureTilemap* CWorld::getSpriteBatchTilemap( unsigned char batchCode )
+{
+	switch( batchCode )
+	{
+	case SPRITE_BATCH_BLOCKS:
+		return m_pTilemapBlocks;
+	case SPRITE_BATCH_LIVING:
+		return m_pTilemapLiving;
+	case SPRITE_BATCH_ITEMS:
+		return m_pTilemapItems;
+	case SPRITE_BATCH_UNKNOWN:
+	default:
+		return 0;
+	}
 }

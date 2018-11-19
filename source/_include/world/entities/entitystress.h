@@ -8,8 +8,6 @@ class CTexture;
 class CEntityStress : public CEntityRenderablePhysics
 {
 private:
-	CTexture *m_pTexture;
-
 	b2Fixture *m_pFixture;
 	b2Body *m_pBody;
 

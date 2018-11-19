@@ -92,6 +92,8 @@ bool CShaderManager::loadPrograms()
 	glUniform1i( this->getShaderProgram( L"base" )->getUniform( "tex2dsampler" ), 0 );
 	// Debug
 	uniforms.push_back( "MVPMatrix" );
+	attribLocations.push_back( std::pair<int, std::string>( 0, "in_pos" ) );
+	attribLocations.push_back( std::pair<int, std::string>( 1, "in_color" ) );
 	if( !this->createAndLoadProgram( L"debug", true, false, true, uniforms, attribLocations ) )
 		return false;
 	uniforms.clear();
@@ -117,9 +119,10 @@ bool CShaderManager::loadPrograms()
 	uniforms.push_back( "MVPMatrix" );
 	uniforms.push_back( "tex2dsampler" );
 	attribLocations.push_back( std::pair<int, std::string>( 0, "in_pos" ) );
-	attribLocations.push_back( std::pair<int, std::string>( 1, "in_size" ) );
-	attribLocations.push_back( std::pair<int, std::string>( 2, "layer" ) );
-	attribLocations.push_back( std::pair<int, std::string>( 3, "in_texcoords" ) );
+	attribLocations.push_back( std::pair<int, std::string>( 1, "in_rotation" ) );
+	attribLocations.push_back( std::pair<int, std::string>( 2, "in_size" ) );
+	attribLocations.push_back( std::pair<int, std::string>( 3, "layer" ) );
+	attribLocations.push_back( std::pair<int, std::string>( 4, "in_texcoords" ) );
 	if( !this->createAndLoadProgram( L"sprite", true, true, true, uniforms, attribLocations ) )
 		return false;
 	uniforms.clear();

@@ -60,6 +60,10 @@ class CEntityRenderable : public CEntityBase
 private:
 	unsigned char m_layer;
 
+	int m_spriteBatchId;
+	unsigned short m_textureTileIndex;
+	glm::lowp_uvec4 m_textureTileCoords;
+
 	bool m_bOpaque;
 public:
 	CEntityRenderable();
@@ -75,6 +79,12 @@ public:
 	void setOpaque( bool opaque );
 
 	bool isRenderable() { return true; }
+
+	void setSpriteBatch( int batchId );
+	void setSpriteTile( unsigned short index, glm::lowp_uvec4 coords );
+	int getBatchId();
+	unsigned short getTileIndex();
+	glm::lowp_uvec4 getTextureTileCoords();
 };
 
 struct EntityRenderableLayerSort {

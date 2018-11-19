@@ -53,6 +53,14 @@ enum : unsigned char
 	MOVEMENTSTATE_RIGHT		= 1 << 3
 };
 
+enum : unsigned char
+{
+	SPRITE_BATCH_UNKNOWN	= 0,
+	SPRITE_BATCH_BLOCKS		= 1,
+	SPRITE_BATCH_LIVING		= 2,
+	SPRITE_BATCH_ITEMS		= 3
+};
+
 class CWorld
 {
 private:
@@ -81,9 +89,9 @@ private:
 
 	BlockMap m_registeredBlocks;
 
-	CTextureTilemap *m_pBlockTilemap;
-	CTextureTilemap *m_pLivingTilemap;
-	CTextureTilemap *m_pItemsTilemap;
+	CTextureTilemap *m_pTilemapBlocks;
+	CTextureTilemap *m_pTilemapLiving;
+	CTextureTilemap *m_pTilemapItems;
 
 	CBlockTerrain *m_pBlockStone;
 	CBlockTerrain *m_pBlockDirt;
@@ -129,4 +137,6 @@ public:
 	CTextureTilemap* getBlockTilemap();
 	glm::vec2 getCameraPosition() const;
 	void setCameraPosition( glm::vec2 cameraPosition );
+	CSpriteManager* getSpriteManager();
+	CTextureTilemap* getSpriteBatchTilemap( unsigned char batchCode );
 };

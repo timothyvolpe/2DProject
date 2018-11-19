@@ -4,13 +4,13 @@
 #include "texturemanager.h"
 #include "graphics.h"
 #include "world\world.h"
+#include "world\spritemanager.h"
 #include "renderutil.h"
 
 #include "interface\interfacemanager.h"
 #include "interface\font.h"
 
 CEntityPlatform::CEntityPlatform() {
-	m_pPlatformTexture = 0;
 	m_texturePath = L"dev\\crate01.png";
 	m_pBody = 0;
 	m_pFixture = 0;
@@ -22,6 +22,18 @@ CEntityPlatform::~CEntityPlatform() {
 
 bool CEntityPlatform::onCreate()
 {
+	CWorld *pWorld =  CGame::getInstance().getWorld();
+	CTextureTilemap *pTilemap = pWorld->getSpriteBatchTilemap( SPRITE_BATCH_BLOCKS );
+
+	// Get texture and batch info
+	if( pTilemap ) {
+		unsigned short tileIndex = pTilemap->getTileIndex( L"dev\\crate01.png" );
+		this->setSpriteBatch( pTilemap->getBatchId() );
+		this->setSpriteTile( tileIndex, pTilemap->getTileCoords( tileIndex ) );
+	}
+	else
+		return false;
+
 	this->setOrigin( m_dimensions / 2.0f );
 	return true;
 }
@@ -39,7 +51,6 @@ void CEntityPlatform::onDestroy()
 
 bool CEntityPlatform::onActivate()
 {
-	TextureDescriptor textureDesc;
 	b2BodyDef bodyDef;
 	b2PolygonShape shapeDef;
 	b2FixtureDef fixtureDef;
@@ -61,23 +72,6 @@ bool CEntityPlatform::onActivate()
 	fixtureDef.density = 1.0f;
 	m_pFixture = m_pBody->CreateFixture( &fixtureDef );
 
-	// Load the texture
-	textureDesc.magFilter = GL_NEAREST;
-	textureDesc.minFilter = GL_NEAREST;
-	textureDesc.wrapS = GL_CLAMP_TO_EDGE;
-	textureDesc.wrapT = GL_CLAMP_TO_EDGE;
-	textureDesc.useAlpha = !this->isOpaque();
-	textureDesc.monochrome = false;
-
-	if( m_texturePath == L"#FONT" ) {
-		m_pPlatformTexture = CGame::getInstance().getInterfaceManager()->getFont( L"DEFAULT_FONT" )->getFontMap();
-		return true;
-	}
-	else {
-		m_pPlatformTexture = CGame::getInstance().getGraphics()->getTextureManager()->loadTexture2D( m_texturePath, textureDesc );
-		if( !m_pPlatformTexture )
-			return false;
-	}
 	return true;
 }
 
@@ -88,11 +82,14 @@ void CEntityPlatform::setTexture( std::wstring texture )
 
 void CEntityPlatform::onDraw()
 {
-	// Bind texture
-	m_pPlatformTexture->bind(0);
-
+	SpriteData sd;
 	// Draw a box
-	CRenderUtil::drawSpriteTextured( glm::vec2( 0.0f, 0.0f ), m_dimensions, glm::vec4( 0.0f, 0.0f, 1.0f, 1.0f ) );
+	sd.layer = LAYER_PLAYER;
+	sd.position = this->getPosition();
+	sd.rotation = this->getRotation();
+	sd.size = m_dimensions;
+	sd.texcoords = this->getTextureTileCoords();
+	CGame::getInstance().getWorld()->getSpriteManager()->drawSprite( this->getBatchId(), sd );
 }
 
 void CEntityPlatform::onUpdate( double deltaT )

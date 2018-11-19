@@ -70,6 +70,9 @@ void CEntityBase::setRotation( float rot ) {
 CEntityRenderable::CEntityRenderable() {
 	m_layer = 127;
 	m_bOpaque = true;
+
+	m_spriteBatchId = -1;
+	m_textureTileIndex = 0;
 }
 CEntityRenderable::~CEntityRenderable() {
 }
@@ -87,6 +90,16 @@ bool CEntityRenderable::isOpaque() const {
 void CEntityRenderable::setOpaque( bool opaque ) {
 	m_bOpaque = opaque;
 }
+void CEntityRenderable::setSpriteBatch( int batchId ) {
+	m_spriteBatchId = batchId;
+}
+void CEntityRenderable::setSpriteTile( unsigned short index, glm::lowp_uvec4 coords ) {
+	m_textureTileIndex = index;
+	m_textureTileCoords = coords;
+}
+int CEntityRenderable::getBatchId() { return m_spriteBatchId; }
+unsigned short CEntityRenderable::getTileIndex() { return m_textureTileIndex; }
+glm::lowp_uvec4 CEntityRenderable::getTextureTileCoords() { return m_textureTileCoords; }
 
 bool EntityRenderableLayerSort::operator()( const CEntityRenderable *pFirst, const CEntityRenderable *pSecond ) {
 	return (pFirst->getLayer() < pSecond->getLayer());

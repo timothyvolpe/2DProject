@@ -25,8 +25,6 @@ private:
 
 	double m_jumpCooldown;
 
-	CTexture *m_pPlayerTexture;
-
 	float m_fPlayerScale;
 	float m_fPlayerMaxSpeed;
 
