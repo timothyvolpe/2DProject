@@ -1,6 +1,7 @@
 #include "base.h"
 #include "world\entities\entitybase.h"
 #include "world\world.h"
+#include "texture.h"
 
 /////////////////
 // CEntityBase //
@@ -73,6 +74,8 @@ CEntityRenderable::CEntityRenderable() {
 
 	m_spriteBatchId = -1;
 	m_textureTileIndex = 0;
+
+	m_texturePath = L"ERROR";
 }
 CEntityRenderable::~CEntityRenderable() {
 }
@@ -89,6 +92,21 @@ bool CEntityRenderable::isOpaque() const {
 }
 void CEntityRenderable::setOpaque( bool opaque ) {
 	m_bOpaque = opaque;
+}
+
+void CEntityRenderable::setTexture( std::wstring texture, unsigned char batchCode )
+{
+	CWorld *pWorld =  CGame::getInstance().getWorld();
+	CTextureTilemap *pTilemap = pWorld->getSpriteBatchTilemap( batchCode );
+	unsigned short tileIndex;
+
+	// Get texture and batch info
+	assert( pTilemap );
+	m_texturePath = texture;
+	tileIndex = pTilemap->getTileIndex( m_texturePath );
+	this->setSpriteBatch( pTilemap->getBatchId() );
+	this->setSpriteTile( tileIndex, pTilemap->getTileCoords( tileIndex ) );
+	
 }
 void CEntityRenderable::setSpriteBatch( int batchId ) {
 	m_spriteBatchId = batchId;

@@ -27,8 +27,6 @@
 
 #include "world\terraingen\terraingen.h"
 
-std::vector<SpriteData> TestSpriteData;
-
 CWorld::CWorld()
 {
 	m_pPlatformArray = 0;
@@ -146,16 +144,17 @@ bool CWorld::initialize()
 		return false;
 	pCurrentPlatform->setPosition( glm::vec2( CHUNK_HEIGHT_UNITS*6+4.25f, CHUNK_HEIGHT_UNITS*6+36 ) );
 	pCurrentPlatform->setLayer( 255 );
-	pCurrentPlatform->setTexture( L"dev\\crate02.png" );
+	pCurrentPlatform->setTexture( L"dev\\crate02.png", SPRITE_BATCH_BLOCKS );
 	pCurrentPlatform->setOpaque( false );
 	pCurrentPlatform->activate();
 
 	pCurrentPlatform = this->createRenderableEntity<CEntityPlatform>( m_pPlatformArray );
 	if( !pCurrentPlatform )
 		return false;
-	pCurrentPlatform->setPosition( glm::vec2( CHUNK_HEIGHT_UNITS*6+4, CHUNK_HEIGHT_UNITS*6+2 ) );
+	pCurrentPlatform->setPosition( glm::vec2( CHUNK_HEIGHT_UNITS*6+4, CHUNK_HEIGHT_UNITS*6+2.5 ) );
 	pCurrentPlatform->setDimensions( glm::vec2( 10.0f, 1.0f ) );
 	pCurrentPlatform->setStatic( true ); 
+	pCurrentPlatform->setTexture( L"dev\\platform.png", SPRITE_BATCH_BLOCKS );
 	pCurrentPlatform->activate();
 
 	pCurrentPlatform = this->createRenderableEntity<CEntityPlatform>( m_pPlatformArray );
@@ -164,6 +163,7 @@ bool CWorld::initialize()
 	pCurrentPlatform->setPosition( glm::vec2( CHUNK_HEIGHT_UNITS*6+10, CHUNK_HEIGHT_UNITS*6+4.5 ) );
 	pCurrentPlatform->setDimensions( glm::vec2( 5.0f, 1.0f ) );
 	pCurrentPlatform->setStatic( true );
+	pCurrentPlatform->setTexture( L"dev\\platform.png", SPRITE_BATCH_BLOCKS );
 	pCurrentPlatform->activate();
 
 	pCurrentPlatform = this->createRenderableEntity<CEntityPlatform>( m_pPlatformArray );
@@ -172,14 +172,14 @@ bool CWorld::initialize()
 	pCurrentPlatform->setPosition( glm::vec2( CHUNK_HEIGHT_UNITS*6+12, CHUNK_HEIGHT_UNITS*6+6.5 ) );
 	pCurrentPlatform->setDimensions( glm::vec2( 5.0f, 1.0f ) );
 	pCurrentPlatform->setStatic( true );
+	pCurrentPlatform->setTexture( L"dev\\platform.png", SPRITE_BATCH_BLOCKS );
 	pCurrentPlatform->activate();
 
 	pCurrentPlatform = this->createRenderableEntity<CEntityPlatform>( m_pPlatformArray );
 	if( !pCurrentPlatform )
 		return false;
-	pCurrentPlatform->setPosition( glm::vec2( CHUNK_HEIGHT_UNITS*6-2, CHUNK_HEIGHT_UNITS*6+6 ) );
+	pCurrentPlatform->setPosition( glm::vec2( CHUNK_HEIGHT_UNITS*6-2, CHUNK_HEIGHT_UNITS*6+8 ) );
 	pCurrentPlatform->setDimensions( glm::vec2( 5.0f, 5.0f ) );
-	pCurrentPlatform->setTexture( L"#FONT" );
 	pCurrentPlatform->setStatic( true );
 	pCurrentPlatform->activate();
 
@@ -190,22 +190,6 @@ bool CWorld::initialize()
 		pStressTest->setPosition( glm::vec2( CHUNK_HEIGHT_UNITS*6+1 + i * 0.1f, CHUNK_HEIGHT_UNITS*6+20 + ( i > 5 ? 0.2f : 0.0f ) ) );
 		pStressTest->setOpaque( false );
 		pStressTest->activate();
-	}
-
-	std::random_device rd;
-	std::mt19937 mt( rd() );
-	std::uniform_real_distribution<float> dist( 0.0f, 15.0f );
-	std::uniform_real_distribution<float> size( 0.5f, 1.0f );
-	std::uniform_int_distribution<int> gen( 1, 500 );
-	for( int i = 0; i < 100; i++ )
-	{
-		SpriteData sd;
-		sd.position = glm::vec2( CHUNK_HEIGHT_UNITS*6+dist( mt ), CHUNK_HEIGHT_UNITS*6+dist( mt ) );
-		sd.rotation = 0.0f;
-		sd.size = glm::vec2( size( mt ), size( mt ) );
-		sd.layer = 100;
-		sd.texcoords = m_pTilemapItems->getTileCoords( 0 );
-		TestSpriteData.push_back( sd );
 	}
 
 	return true;
@@ -255,22 +239,21 @@ bool CWorld::loadTilemaps()
 	
 
 	// Block tiles
-	m_pTilemapBlocks->addTile( L"env\\stone.png" ); 
+	m_pTilemapBlocks->addTile( L"env\\stone.png" );
 	m_pTilemapBlocks->addTile( L"env\\dirt.png" ); 
 	m_pTilemapBlocks->addTile( L"env\\grass.png" );
 	m_pTilemapBlocks->addTile( L"dev\\crate01.png" );
 	m_pTilemapBlocks->addTile( L"dev\\crate02.png" );
+	m_pTilemapBlocks->addTile( L"dev\\platform.png" );
 	if( !m_pTilemapBlocks->binPackTilemap( DEFAULT_TILEMAPSIZE ) )
 		return false;
 	// Living tiles
 	m_pTilemapLiving->addTile( L"dev\\player.png" );
-	m_pTilemapLiving->addTile( L"dev\\platform.png" );
 	if( !m_pTilemapLiving->binPackTilemap( DEFAULT_TILEMAPSIZE ) )
 		return false;
 	// Item tiles
 	m_pTilemapItems->addTile( L"dev\\crate02.png" );
 	m_pTilemapItems->addTile( L"dev\\key.png" );
-	m_pTilemapItems->addTile( L"dev\\platform.png" );
 	if( !m_pTilemapItems->binPackTilemap( DEFAULT_TILEMAPSIZE ) )
 		return false;
 
@@ -279,13 +262,13 @@ bool CWorld::loadTilemaps()
 bool CWorld::initBlocks()
 {
 	m_pBlockStone = new CBlockTerrain( BLOCK_ID_STONE );
-	m_pBlockStone->setTextureIndex( m_pTilemapBlocks->getTileIndex( L"env\\stone.png" ) );
+	m_pBlockStone->setTexture( L"env\\stone.png", SPRITE_BATCH_BLOCKS );
 	this->registerBlock( m_pBlockStone );
 	m_pBlockDirt = new CBlockTerrain( BLOCK_ID_DIRT );
-	m_pBlockDirt->setTextureIndex( m_pTilemapBlocks->getTileIndex( L"env\\dirt.png" ) );
+	m_pBlockDirt->setTexture( L"env\\dirt.png", SPRITE_BATCH_BLOCKS );
 	this->registerBlock( m_pBlockDirt );
 	m_pBlockGrass = new CBlockTerrain( BLOCK_ID_GRASS );
-	m_pBlockGrass->setTextureIndex( m_pTilemapBlocks->getTileIndex( L"env\\grass.png" ) );
+	m_pBlockGrass->setTexture( L"env\\grass.png", SPRITE_BATCH_BLOCKS );
 	this->registerBlock( m_pBlockGrass );
 
 	return true;
@@ -299,7 +282,6 @@ void CWorld::destroyBlocks()
 
 void CWorld::draw( glm::mat4& orthoMat )
 {
-	CShaderProgram *pBaseProgram = CGame::getInstance().getGraphics()->getShaderManager()->getShaderProgram( L"base" );
 	CShaderProgram *pSpriteProgram = CGame::getInstance().getGraphics()->getShaderManager()->getShaderProgram( L"sprite" );
 	CShaderProgram *pDebugProgram = CGame::getInstance().getGraphics()->getShaderManager()->getShaderProgram( L"debug" );
 	glm::mat4 modelMatrix, viewMatrix, mvpMatrix;
@@ -328,7 +310,6 @@ void CWorld::draw( glm::mat4& orthoMat )
 
 	StartGLDebug( "DrawWorld" );
 
-	CGame::getInstance().getGraphics()->getShaderManager()->bind( pBaseProgram );
 	// Render chunks
 	for( auto it = m_pChunkManager->getChunksRendered().begin(); it != m_pChunkManager->getChunksRendered().end(); it++ )
 	{
@@ -336,33 +317,22 @@ void CWorld::draw( glm::mat4& orthoMat )
 		{
 			modelMatrix = glm::translate( glm::mat4( 1.0f ), glm::vec3( (*it2)->getPosition() * glm::ivec2( CHUNK_WIDTH_UNITS, CHUNK_HEIGHT_UNITS ), CGraphics::getLayerPosition( LAYER_CHUNKBLOCKS ) ) );
 			mvpMatrix = orthoMat * viewMatrix * modelMatrix;
-			glUniformMatrix4fv( pBaseProgram->getUniform( "MVPMatrix" ), 1, GL_FALSE, &mvpMatrix[0][0] );
+			glUniformMatrix4fv( pSpriteProgram->getUniform( "MVPMatrix" ), 1, GL_FALSE, &mvpMatrix[0][0] );
 			(*it2)->draw();
 		}
-	}                                             
-
-	for( auto it = m_pDrawArray->getEntityList().begin(); it != m_pDrawArray->getEntityList().end(); it++ )
-	{
-		// Translate
-		modelMatrix = glm::translate( glm::mat4( 1.0f ), glm::vec3( (*it)->getPosition()-(*it)->getOrigin(), CGraphics::getLayerPosition( (*it)->getLayer() ) ) );
-		// Rotate about the origin
-		modelMatrix = glm::translate( modelMatrix, glm::vec3( (*it)->getOrigin(), 0.0f ) );
-		modelMatrix = glm::rotate( modelMatrix, (*it)->getRotation(), glm::vec3( 0.0f, 0.0f, 1.0f ) );
-		modelMatrix = glm::translate( modelMatrix, -glm::vec3( (*it)->getOrigin(), 0.0f ) );
-
-		mvpMatrix = orthoMat * viewMatrix * modelMatrix;
-		glUniformMatrix4fv( pBaseProgram->getUniform( "MVPMatrix" ), 1, GL_FALSE, &mvpMatrix[0][0] );
-		(*it)->onDraw();
 	}
 
-	for( auto it = TestSpriteData.begin(); it != TestSpriteData.end(); it++ )
-		m_pSpriteManager->drawSprite( m_pTilemapItems->getBatchId(), (*it) );
+	// Draw entities
+	mvpMatrix = orthoMat * viewMatrix;
+	glUniformMatrix4fv( pSpriteProgram->getUniform( "MVPMatrix" ), 1, GL_FALSE, &mvpMatrix[0][0] );
+	for( auto it = m_pDrawArray->getEntityList().begin(); it != m_pDrawArray->getEntityList().end(); it++ )
+		(*it)->onDraw();
 
-	// Draw sprites
+	// Render sprites
 	CGame::getInstance().getGraphics()->getShaderManager()->bind( pSpriteProgram );
 	mvpMatrix = orthoMat * viewMatrix;
-	glUniformMatrix4fv( pBaseProgram->getUniform( "MVPMatrix" ), 1, GL_FALSE, &mvpMatrix[0][0] );
-	// Draw each batch of sprite
+	glUniformMatrix4fv( pSpriteProgram->getUniform( "MVPMatrix" ), 1, GL_FALSE, &mvpMatrix[0][0] );
+	// Render each batch of sprite
 	m_pTilemapBlocks->bind( 0 );
 	m_pSpriteManager->draw( m_pTilemapBlocks->getBatchId() );
 	m_pTilemapItems->bind( 0 );
@@ -376,7 +346,7 @@ void CWorld::draw( glm::mat4& orthoMat )
 	{
 		CGame::getInstance().getGraphics()->getShaderManager()->bind( pDebugProgram );
 		// Chunks
-		for( auto it = m_pChunkManager->getChunksRendered().begin(); it != m_pChunkManager->getChunksRendered().end(); it++ )
+		/*for( auto it = m_pChunkManager->getChunksRendered().begin(); it != m_pChunkManager->getChunksRendered().end(); it++ )
 		{
 			for( auto it2 = (*it).begin(); it2 != (*it).end(); it2++ )
 			{
@@ -385,7 +355,7 @@ void CWorld::draw( glm::mat4& orthoMat )
 				glUniformMatrix4fv( pDebugProgram->getUniform( "MVPMatrix" ), 1, GL_FALSE, &mvpMatrix[0][0] );
 				(*it2)->debugDraw();
 			}
-		}
+		}*/
 
 		// Physics
 		modelMatrix = glm::mat4( 1.0f );

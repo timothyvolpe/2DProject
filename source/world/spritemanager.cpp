@@ -70,6 +70,7 @@ int CSpriteManager::createBatch()
 }
 
 void CSpriteManager::drawSprite( int batchId, SpriteData spriteData ) {
+	assert( batchId >= 0 );
 	m_batches[batchId].sprites.push_back( spriteData );
 }
 

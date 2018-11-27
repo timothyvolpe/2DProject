@@ -8,7 +8,6 @@ class CTexture;
 class CEntityPlatform : public CEntityRenderablePhysics
 {
 private:
-	std::wstring m_texturePath;
 	bool m_bStatic;
 	glm::vec2 m_dimensions;
 
@@ -27,7 +26,6 @@ public:
 
 	void onUpdate( double deltaT );
 
-	void setTexture( std::wstring texture );
 	void setStatic( bool isStatic );
 	void setDimensions( glm::vec2 dim );
 };

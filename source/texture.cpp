@@ -189,6 +189,9 @@ bool CTextureTilemap::initialize()
 		return false;
 	}
 
+	// Add error tile
+	this->addTile( ERROR_TEXTURE );
+
 	return true;
 }
 void CTextureTilemap::destroy()
@@ -387,7 +390,13 @@ bool CTextureTilemap::binPackTilemap( int size )
 		// Map to all possible vlaues of GLushort
 		m_tileCoordTable.push_back( glm::lowp_uvec4( normalizedCoords * MaxShort ) );
 		// Add to lookup table
-		m_tileIndexTable.insert( std::pair<std::wstring, unsigned short>( (*it)->name, (unsigned short)m_tileIndexTable.size() ) );
+		// Check if it was the error texture
+		if( (*it)->name == ERROR_TEXTURE )
+			m_tileIndexTable.insert( std::pair<std::wstring, unsigned short>( L"ERROR", (unsigned short)m_tileIndexTable.size() ) );
+		else
+			m_tileIndexTable.insert( std::pair<std::wstring, unsigned short>( (*it)->name, (unsigned short)m_tileIndexTable.size() ) );
+
+		
 	}
 
 	// Traverse tree and construct tilemap
@@ -430,6 +439,10 @@ unsigned short CTextureTilemap::getTileIndex( std::wstring path ) {
 	if( it != m_tileIndexTable.end() )
 		return (*it).second;
 	PrintWarn( L"Could not find texture \'%s\' in map\n", path.c_str() );
+	// Use error texture
+	it = m_tileIndexTable.find( L"ERROR" );
+	if( it != m_tileIndexTable.end() )
+		return (*it).second;
 	return 0;
 }
 

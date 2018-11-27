@@ -9,8 +9,20 @@
 #include "shader\shadermanager.h"
 #include "renderutil.h"
 
+EnvVertex CreateEnvVertex( glm::vec2 pos, glm::vec2 texcoords )
+{
+	EnvVertex vertex;
+	vertex.pos = pos;
+	vertex.texcoords = texcoords;
+	return vertex;
+}
+
 CEnvironment::CEnvironment() {
+	m_vaoId = 0;
+	m_vboId = 0;
+	m_iboId = 0;
 	m_pMountainTexture = 0;
+	m_pVertices = 0;
 }
 CEnvironment::~CEnvironment() {
 }
@@ -18,6 +30,31 @@ CEnvironment::~CEnvironment() {
 bool CEnvironment::initialize()
 {
 	TextureDescriptor textureDesc;
+
+	StartGLDebug( "CreateEnvironment" );
+
+	glGenVertexArrays( 1, &m_vaoId );
+	glBindVertexArray( m_vaoId );
+
+	glGenBuffers( 1, &m_vboId );
+	glBindBuffer( GL_ARRAY_BUFFER, m_vboId );
+	glEnableVertexAttribArray( 0 );
+	glEnableVertexAttribArray( 1 );
+	glVertexAttribPointer( 0, 2, GL_FLOAT, GL_FALSE, sizeof( EnvVertex ), (GLvoid*)offsetof( EnvVertex, pos ) );
+	glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, sizeof( EnvVertex ), (GLvoid*)offsetof( EnvVertex, texcoords ) );
+
+	m_pVertices = new EnvVertex[ENV_QUAD_COUNT*4];
+	glBufferData( GL_ARRAY_BUFFER, sizeof( EnvVertex ) * ENV_QUAD_COUNT * 4, m_pVertices, GL_STREAM_DRAW );
+
+	glGenBuffers( 1, &m_iboId );
+	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, m_iboId );
+
+	// Indices
+	unsigned int pIndices[] = { 0, 0, 0, 0, 0, 0,
+								0, 0, 0, 0, 0, 0 };
+	glBufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof( unsigned int ) * ENV_QUAD_COUNT * 6, pIndices, GL_STATIC_DRAW );
+
+	EndGLDebug();
 
 	// Create the background texture
 	// Load the texture
@@ -34,7 +71,21 @@ bool CEnvironment::initialize()
 }
 void CEnvironment::destroy()
 {
-	
+	DestroyDelete( m_pMountainTexture );
+	SafeDelete( m_pVertices );
+
+	if( m_iboId ) {
+		glDeleteBuffers( 1, &m_iboId );
+		m_iboId = 0;
+	}
+	if( m_vboId ) {
+		glDeleteBuffers( 1, &m_vboId );
+		m_vboId = 0;
+	}
+	if( m_vaoId ) {
+		glDeleteVertexArrays( 1, &m_vaoId );
+		m_vaoId = 0;
+	}
 }
 
 void CEnvironment::draw( unsigned char worldLayer, glm::mat4 orthoMatrix )
@@ -49,6 +100,11 @@ void CEnvironment::draw( unsigned char worldLayer, glm::mat4 orthoMatrix )
 	screenResolution = glm::vec2( (float)CGame::getInstance().getConfig()->m_resolutionX, (float)CGame::getInstance().getConfig()->m_resolutionY );
 
 	CGame::getInstance().getGraphics()->getShaderManager()->bind( pEnvProgram );
+
+	m_pVertices[0] = CreateEnvVertex( glm::vec2( 0, 0 ), glm::vec2( 0, 0 ) );
+	m_pVertices[1] = CreateEnvVertex( glm::vec2( 0, 0 ), glm::vec2( 0, 0 ) );
+	m_pVertices[2] = CreateEnvVertex( glm::vec2( 0, 0 ), glm::vec2( 0, 0 ) );
+	m_pVertices[3] = CreateEnvVertex( glm::vec2( 0, 0 ), glm::vec2( 0, 0 ) );
 
 	StartGLDebug( "DrawEnvironment" );
 

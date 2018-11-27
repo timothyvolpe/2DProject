@@ -11,7 +11,6 @@
 #include "interface\font.h"
 
 CEntityPlatform::CEntityPlatform() {
-	m_texturePath = L"dev\\crate01.png";
 	m_pBody = 0;
 	m_pFixture = 0;
 	m_bStatic = false;
@@ -22,18 +21,7 @@ CEntityPlatform::~CEntityPlatform() {
 
 bool CEntityPlatform::onCreate()
 {
-	CWorld *pWorld =  CGame::getInstance().getWorld();
-	CTextureTilemap *pTilemap = pWorld->getSpriteBatchTilemap( SPRITE_BATCH_BLOCKS );
-
-	// Get texture and batch info
-	if( pTilemap ) {
-		unsigned short tileIndex = pTilemap->getTileIndex( L"dev\\crate01.png" );
-		this->setSpriteBatch( pTilemap->getBatchId() );
-		this->setSpriteTile( tileIndex, pTilemap->getTileCoords( tileIndex ) );
-	}
-	else
-		return false;
-
+	this->setTexture( L"dev\\crate01.png", SPRITE_BATCH_BLOCKS );
 	this->setOrigin( m_dimensions / 2.0f );
 	return true;
 }
@@ -73,11 +61,6 @@ bool CEntityPlatform::onActivate()
 	m_pFixture = m_pBody->CreateFixture( &fixtureDef );
 
 	return true;
-}
-
-void CEntityPlatform::setTexture( std::wstring texture )
-{
-	m_texturePath = texture;
 }
 
 void CEntityPlatform::onDraw()

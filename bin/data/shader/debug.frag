@@ -1,8 +1,8 @@
 #version 150
 
-in vec3 vColor;
+in vec4 vColor;
 
 void main()
 {
-	gl_FragColor = vec4( vColor, 1.0f );
+	gl_FragColor = vColor;
 }

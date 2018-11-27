@@ -64,6 +64,8 @@ private:
 	unsigned short m_textureTileIndex;
 	glm::lowp_uvec4 m_textureTileCoords;
 
+	std::wstring m_texturePath;
+
 	bool m_bOpaque;
 public:
 	CEntityRenderable();
@@ -80,6 +82,7 @@ public:
 
 	bool isRenderable() { return true; }
 
+	void setTexture( std::wstring texture, unsigned char batchCode );
 	void setSpriteBatch( int batchId );
 	void setSpriteTile( unsigned short index, glm::lowp_uvec4 coords );
 	int getBatchId();

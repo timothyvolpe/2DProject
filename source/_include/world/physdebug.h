@@ -4,8 +4,9 @@
 
 #pragma pack(push, 4)
 typedef struct {
-	glm::vec2 pos;
 	glm::vec3 color;
+	glm::vec2 pos;
+	unsigned char unused[12];
 } DebugVertex;
 #pragma pack(pop)
 

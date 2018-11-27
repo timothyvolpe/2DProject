@@ -5,6 +5,7 @@
 #include "texture.h"
 #include "texturemanager.h"
 #include "world\terraingen\terraingen.h"
+#include "world\spritemanager.h"
 #include "blocks\block.h"
 #include "renderutil.h"
 
@@ -51,6 +52,7 @@ bool CChunk::populateChunk()
 void CChunk::draw()
 {
 	glm::vec4 uvbounds;
+	SpriteData sd;
 
 	CGame::getInstance().getWorld()->getBlockTilemap()->bind(0);
 	for( size_t x = 0; x < CHUNK_WIDTH_BLOCKS; x++ )
@@ -59,15 +61,21 @@ void CChunk::draw()
 		{
 			if( !m_blocks[x][y] )
 				continue;
-			uvbounds = CGame::getInstance().getWorld()->getBlockTilemap()->getTileCoords( m_blocks[x][y]->getTextureIndex() );
-			CRenderUtil::drawSpriteTextured( glm::vec2( x*CHUNK_BLOCK_SIZE, y*CHUNK_BLOCK_SIZE ), glm::vec2( CHUNK_BLOCK_SIZE, CHUNK_BLOCK_SIZE ), uvbounds );
+
+			// Draw a box
+			sd.layer = LAYER_PLAYER;
+			sd.position = (glm::vec2( x*CHUNK_BLOCK_SIZE, y*CHUNK_BLOCK_SIZE ) - glm::vec2( CHUNK_BLOCK_SIZE / 2.0f, CHUNK_BLOCK_SIZE / 2.0f )) + glm::vec2( this->getPosition() ) * glm::vec2( CHUNK_WIDTH_UNITS, CHUNK_HEIGHT_UNITS );
+			sd.rotation = 0.0f;
+			sd.size = glm::vec2( CHUNK_BLOCK_SIZE, CHUNK_BLOCK_SIZE );
+			sd.texcoords = m_blocks[x][y]->getTextureTileCoords();
+			CGame::getInstance().getWorld()->getSpriteManager()->drawSprite( m_blocks[x][y]->getBatchId(), sd );
 		}
 	}
 }
 
 void CChunk::debugDraw()
 {
-	glBegin( GL_LINE_STRIP );
+	/*glBegin( GL_LINE_STRIP );
 	{
 		glColor3f( 1.0f, 0.0f, 0.0f );
 		glVertex2f( 0, 0 );
@@ -80,7 +88,7 @@ void CChunk::debugDraw()
 		glColor3f( 1.0f, 0.0f, 0.0f );
 		glVertex2f( 0, 0 );
 	}
-	glEnd();
+	glEnd();*/
 }
 
 glm::ivec2 CChunk::getPosition() const {

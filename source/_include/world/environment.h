@@ -1,5 +1,7 @@
 #pragma once
 
+#define ENV_QUAD_COUNT 2
+
 class CTexture2D;
 
 enum : unsigned char
@@ -14,10 +16,24 @@ enum : int
 	ENV_DRAWMODE_MOUNTAINS = 1
 };
 
+#pragma pack(push, 4)
+typedef struct {
+	glm::vec2 pos, texcoords;
+	unsigned char unused[24];
+} EnvVertex;
+#pragma pack(pop)
+
+EnvVertex CreateEnvVertex( glm::vec2 pos, glm::vec2 texcoords );
+
 class CEnvironment
 {
 private:
+	GLuint m_vaoId;
+	GLuint m_vboId, m_iboId;
+
 	CTexture2D *m_pMountainTexture;
+
+	EnvVertex *m_pVertices;
 public:
 	CEnvironment();
 	~CEnvironment();

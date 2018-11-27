@@ -11,6 +11,8 @@
 #define DEFAULT_TILEMAPSIZE 2048
 #define DEFAULT_TILESIZE 32
 
+#define ERROR_TEXTURE L"dev\\error.png"
+
 /////////////////
 // ImagePacker //
 /////////////////

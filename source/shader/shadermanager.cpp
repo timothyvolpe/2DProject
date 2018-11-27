@@ -92,8 +92,8 @@ bool CShaderManager::loadPrograms()
 	glUniform1i( this->getShaderProgram( L"base" )->getUniform( "tex2dsampler" ), 0 );
 	// Debug
 	uniforms.push_back( "MVPMatrix" );
-	attribLocations.push_back( std::pair<int, std::string>( 0, "in_pos" ) );
-	attribLocations.push_back( std::pair<int, std::string>( 1, "in_color" ) );
+	attribLocations.push_back( std::pair<int, std::string>( 0, "in_color" ) );
+	attribLocations.push_back( std::pair<int, std::string>( 1, "in_pos" ) );
 	if( !this->createAndLoadProgram( L"debug", true, false, true, uniforms, attribLocations ) )
 		return false;
 	uniforms.clear();

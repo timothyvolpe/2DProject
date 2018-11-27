@@ -15,8 +15,8 @@ CPhysicsDebugDraw::CPhysicsDebugDraw()
 	glBindBuffer( GL_ARRAY_BUFFER, m_vboId );
 	glEnableVertexAttribArray( 0 );
 	glEnableVertexAttribArray( 1 );
-	glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, sizeof( DebugVertex ), (GLvoid*)offsetof( DebugVertex, pos ) );
-	glVertexAttribPointer( 1, 3, GL_FLOAT, GL_FALSE, sizeof( DebugVertex ), (GLvoid*)offsetof( DebugVertex, color ) );
+	glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, sizeof( DebugVertex ), (GLvoid*)offsetof( DebugVertex, color ) );
+	glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, sizeof( DebugVertex ), (GLvoid*)offsetof( DebugVertex, pos ) );
 	glBufferData( GL_ARRAY_BUFFER, 0, 0, GL_STREAM_DRAW );
 
 	EndGLDebug();
