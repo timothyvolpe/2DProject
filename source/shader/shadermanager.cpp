@@ -121,8 +121,9 @@ bool CShaderManager::loadPrograms()
 	attribLocations.push_back( std::pair<int, std::string>( 0, "in_pos" ) );
 	attribLocations.push_back( std::pair<int, std::string>( 1, "in_rotation" ) );
 	attribLocations.push_back( std::pair<int, std::string>( 2, "in_size" ) );
-	attribLocations.push_back( std::pair<int, std::string>( 3, "layer" ) );
-	attribLocations.push_back( std::pair<int, std::string>( 4, "in_texcoords" ) );
+	attribLocations.push_back( std::pair<int, std::string>( 3, "in_texcoords" ) );
+	attribLocations.push_back( std::pair<int, std::string>( 4, "in_layer" ) );
+	//attribLocations.push_back( std::pair<int, std::string>( 5, "in_tileinfo" ) );
 	if( !this->createAndLoadProgram( L"sprite", true, true, true, uniforms, attribLocations ) )
 		return false;
 	uniforms.clear();

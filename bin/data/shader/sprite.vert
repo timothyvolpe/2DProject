@@ -3,18 +3,20 @@
 in vec2 in_pos;
 in float in_rotation;
 in vec2 in_size;
-in int layer;
 in vec4 in_texcoords;
+//in uint in_layer;
+in uvec3 in_tileinfo;
 
 out vec2 gSize;
 out vec4 gTexcoords;
 out mat4 gModelMat;
+out uint gTileInfo[2];
 
 uniform float layerSize = 0.1f;
 
 void main()
 {
-	gl_Position = vec4( in_pos, -(255.0f - layer)*layerSize, 1.0f );
+	gl_Position = vec4( in_pos, -(255.0f - in_tileinfo.x)*layerSize, 1.0f );
 	
 	// Create a rotation matrix
 	vec3 axis = vec3( 0.0, 0.0, 1.0 );
@@ -40,48 +42,6 @@ void main()
 		1.0f
 	);
 	
-	mat4 originTrans =  mat4(
-							1.0f,
-							0.0f,
-							0.0f,
-							0.0f,
-							
-							0.0f,
-							1.0f,
-							0.0f,
-							0.0f,
-							
-							0.0f,
-							0.0f,
-							1.0f,
-							0.0f,
-							
-							in_size.xy / 2,
-							0.0f,
-							1.0f
-						);
-						
-	mat4 revOriginTrans =  mat4(
-							1.0f,
-							0.0f,
-							0.0f,
-							0.0f,
-							
-							0.0f,
-							1.0f,
-							0.0f,
-							0.0f,
-							
-							0.0f,
-							0.0f,
-							1.0f,
-							0.0f,
-							
-							-in_size.xy / 2,
-							0.0f,
-							1.0f
-						);
-	
 	gModelMat = mat4(
 					1.0f,
 					0.0f,
@@ -105,4 +65,6 @@ void main()
 	
 	gSize = in_size / 2;
 	gTexcoords.wxyz = in_texcoords;
+	gTileInfo[0] = in_tileinfo.y;
+	gTileInfo[1] = in_tileinfo.z;
 }

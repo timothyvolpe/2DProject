@@ -76,7 +76,7 @@ bool CWorld::initialize()
 	// Setup debug drawer
 	m_pDebugDraw->SetFlags( b2Draw::e_shapeBit );
 
-	m_cameraPosition = glm::vec2( CHUNK_HEIGHT_UNITS*6, CHUNK_HEIGHT_UNITS*6 );
+	m_cameraPosition = glm::vec2( 0, 0 );
 
 	// Create the environment
 	m_pEnvironment = new CEnvironment();
@@ -113,17 +113,6 @@ bool CWorld::initialize()
 	// Create blocks
 	if( !this->initBlocks() )
 		return false;
-	// Create terrain manager
-	m_pTerrainGenerator = new CTerrainGenerator();
-	if( !m_pTerrainGenerator->initialize( this ) )
-		return false;
-	// Create chunk manager
-	m_pChunkManager = new CChunkManager();
-	m_pChunkManager->setChunksOrigin( glm::ivec2( (int)floor( m_cameraPosition.x / CHUNK_WIDTH_UNITS ), (int)floor( m_cameraPosition.y / CHUNK_WIDTH_UNITS ) ) );
-	if( !m_pChunkManager->initialize() )
-		return false;
-	// Load chunks
-	m_pChunkManager->populateChunks();
 
 	// CLIENT-SIDE ONLY:
 	// Spawn local player
@@ -131,7 +120,20 @@ bool CWorld::initialize()
 	if( !m_pLocalPlayer )
 		return false;
 	m_pLocalPlayer->setPosition( glm::vec2( CHUNK_HEIGHT_UNITS*6+2, CHUNK_HEIGHT_UNITS*6+5 ) );
+	m_cameraPosition = m_pLocalPlayer->getPosition();
 	m_pLocalPlayer->activate();
+
+	// Create terrain manager
+	m_pTerrainGenerator = new CTerrainGenerator();
+	if( !m_pTerrainGenerator->initialize( this ) )
+		return false;
+	// Create chunk manager
+	m_pChunkManager = new CChunkManager();
+	if( !m_pChunkManager->initialize() )
+		return false;
+	
+	// Load chunks
+	m_pChunkManager->populateChunks();
 
 	pCurrentPlatform = this->createRenderableEntity<CEntityPlatform>( m_pPlatformArray );
 	if( !pCurrentPlatform )
@@ -252,7 +254,6 @@ bool CWorld::loadTilemaps()
 	if( !m_pTilemapLiving->binPackTilemap( DEFAULT_TILEMAPSIZE ) )
 		return false;
 	// Item tiles
-	m_pTilemapItems->addTile( L"dev\\crate02.png" );
 	m_pTilemapItems->addTile( L"dev\\key.png" );
 	if( !m_pTilemapItems->binPackTilemap( DEFAULT_TILEMAPSIZE ) )
 		return false;
@@ -299,8 +300,6 @@ void CWorld::draw( glm::mat4& orthoMat )
 
 	// Calculate view matrix
 	viewMatrix = glm::translate( glm::mat4( 1.0f ), glm::vec3( -m_cameraPosition, 0.0f ) );
-	// Update chunks
-	m_pChunkManager->update( glm::ivec2( m_cameraPosition ) );
 
 	// Sort the draw list
 	m_pDrawArray->sortByLayer();
@@ -429,6 +428,8 @@ void CWorld::update( double deltaT )
 		(*it)->onUpdate( deltaT );
 	// Update sprites
 	m_pSpriteManager->update( deltaT );
+	// Update chunks
+	m_pChunkManager->update( m_cameraPosition );
 }
 
 bool CWorld::registerBlock( CBlock *pBlock )

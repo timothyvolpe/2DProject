@@ -85,5 +85,7 @@ void CEntityStress::onDraw()
 	sd.rotation = this->getRotation();
 	sd.size = m_dimensions;
 	sd.texcoords = this->getTextureTileCoords();
+	sd.tileInfo[0] = 1;
+	sd.tileInfo[1] = 1;
 	CGame::getInstance().getWorld()->getSpriteManager()->drawSprite( this->getBatchId(), sd );
 }

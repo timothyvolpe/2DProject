@@ -2,14 +2,13 @@
 
 #define BATCH_CHUNK_SIZE 4096
 
-#pragma pack(push, 4)
+#pragma pack(push, 16)
 typedef struct {
 	glm::vec2 pos;
 	float rot;
 	glm::vec2 size;
 	glm::lowp_uvec4 texcoords;
-	unsigned char layer;
-	unsigned char unused1[2];	// pad to 32 bytes
+	unsigned char tileInfo[4];
 } SpriteVertex;
 #pragma pack(pop)
 
@@ -20,6 +19,7 @@ struct SpriteData
 	glm::vec2 size;
 	glm::lowp_uvec4 texcoords;
 	unsigned char layer;
+	unsigned char tileInfo[2];
 };
 
 struct SpriteBatch

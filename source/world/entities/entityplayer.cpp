@@ -105,6 +105,8 @@ void CEntityPlayer::onDraw()
 	sd.rotation = 0.0f;
 	sd.size = glm::vec2( playerSize );
 	sd.texcoords = this->getTextureTileCoords();
+	sd.tileInfo[0] = 1;
+	sd.tileInfo[1] = 1;
 	CGame::getInstance().getWorld()->getSpriteManager()->drawSprite( this->getBatchId(), sd );
 }
 

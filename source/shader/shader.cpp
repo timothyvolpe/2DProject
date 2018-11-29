@@ -182,6 +182,14 @@ bool CShaderProgram::initializeProgram( std::wstring name, CShaderObject *pVerte
 	if( pFragmentObject )
 		glAttachShader( m_programId, pFragmentObject->getShaderId() );
 
+	StartGLDebug( "BindShaderAttribs" );
+
+	// Bind attribs
+	for( auto it = attribLocations.begin(); it != attribLocations.end(); it++ )
+		glBindAttribLocation( m_programId, (*it).first, (*it).second.c_str() );
+
+	EndGLDebug();
+
 	// Link the program
 	glLinkProgram( m_programId );
 	// Make sure it was successful
@@ -227,7 +235,7 @@ bool CShaderProgram::initializeProgram( std::wstring name, CShaderObject *pVerte
 	}
 
 	EndGLDebug();
-	StartGLDebug( "FindUniformsBindAttribs" );
+	StartGLDebug( "FindUniforms" );
 
 	// Find uniforms
 	for( auto it = uniformNames.begin(); it != uniformNames.end(); it++ )
@@ -241,10 +249,6 @@ bool CShaderProgram::initializeProgram( std::wstring name, CShaderObject *pVerte
 		}
 		m_uniforms.insert( std::pair<std::string, GLint>( (*it), location ) );
 	}
-
-	// Bind attribs
-	for( auto it = attribLocations.begin(); it != attribLocations.end(); it++ )
-		glBindAttribLocation( m_programId, (*it).first, (*it).second.c_str() );
 
 	EndGLDebug();
 	StartGLDebug( "DetachShaders" );

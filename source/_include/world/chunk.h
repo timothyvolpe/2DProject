@@ -11,6 +11,12 @@ class CBlock;
 
 class CTexture2D;
 
+struct ChunkQuad {
+	glm::ivec2 relativePosition;
+	glm::ivec2 size;
+	CBlock *pBlock;
+};
+
 class CChunk
 {
 private:
@@ -18,6 +24,8 @@ private:
 
 	glm::ivec2 m_position;
 	glm::ivec2 m_relativePosition;
+
+	std::vector<ChunkQuad> m_chunkQuads;
 public:
 	CChunk();
 	~CChunk();

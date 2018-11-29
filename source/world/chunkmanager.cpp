@@ -86,6 +86,14 @@ void CChunkManager::shiftChunks( glm::ivec2 movementVector )
 	ChunkList newChunkList;
 	std::vector<CChunk*> oldChunkLine;
 
+	// Check if its a "teleport" (more than 1 chunk change)
+	if( abs( movementVector.x ) > 0 || abs( movementVector.y ) > 0 ) {
+		this->destroyChunks();
+		this->allocateChunks();
+		this->populateChunks();
+		return;
+	}
+
 	// Delete left column, load right column
 	if( movementVector.x > 0 ) {
 		// Get leftmost column
@@ -184,7 +192,7 @@ void CChunkManager::shiftChunks( glm::ivec2 movementVector )
 			(*it)->populateChunk();
 	}
 }
-void CChunkManager::update( glm::ivec2 bottomLeft )
+void CChunkManager::update( glm::vec2 bottomLeft )
 {
 	glm::ivec2 bottomLeftChunk;
 	glm::ivec2 movementVector;

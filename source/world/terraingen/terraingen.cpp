@@ -8,6 +8,7 @@ int CTerrainGenerator::GrassDepth = 4;
 
 CTerrainGenerator::CTerrainGenerator() {
 	m_pWorldHandle = 0;
+	m_perlin = siv::PerlinNoise( 200 );
 }
 CTerrainGenerator::~CTerrainGenerator() {
 }
@@ -24,10 +25,11 @@ void CTerrainGenerator::destroy()
 
 CBlock* CTerrainGenerator::generateBlock( glm::ivec2 chunkPos, glm::ivec2 blockPos )
 {
-	
+	int grassLevel = (m_perlin.octaveNoise( (float)chunkPos.x / 16.0f, 2 ) * 64) + GrassDepth;
+
 	if( chunkPos.y == SurfaceLevel ) {
-		if( blockPos.y <= GrassDepth ) {
-			if( blockPos.y == GrassDepth )
+		if( blockPos.y <= grassLevel ) {
+			if( blockPos.y == grassLevel )
 				return m_pWorldHandle->getBlock( BLOCK_ID_GRASS );
 			else
 				return m_pWorldHandle->getBlock( BLOCK_ID_DIRT );

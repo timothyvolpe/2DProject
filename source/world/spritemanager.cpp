@@ -2,14 +2,15 @@
 #include "world\spritemanager.h"
 #include <glm\gtx\constants.hpp>
 
-
 SpriteVertex CopySpriteVertex( SpriteData& data ) {
 	SpriteVertex vertex;
 	vertex.pos = data.position;
 	vertex.rot = data.rotation * (glm::pi<float>() / 180.0f);
 	vertex.size = data.size;
-	vertex.layer = data.layer;
 	vertex.texcoords = data.texcoords;
+	vertex.tileInfo[0] = data.layer;
+	vertex.tileInfo[1] = data.tileInfo[0];
+	vertex.tileInfo[2] = data.tileInfo[1];
 	return vertex;
 }
 CSpriteManager::CSpriteManager() {
@@ -50,12 +51,23 @@ int CSpriteManager::createBatch()
 	glEnableVertexAttribArray( 2 );
 	glEnableVertexAttribArray( 3 );
 	glEnableVertexAttribArray( 4 );
+	//glEnableVertexAttribArray( 5 );
 	glVertexAttribPointer(	0, 2, GL_FLOAT,				GL_FALSE,	sizeof( SpriteVertex ), (GLvoid*)offsetof( SpriteVertex, pos ) );
 	glVertexAttribPointer(	1, 1, GL_FLOAT,				GL_FALSE,	sizeof( SpriteVertex ), (GLvoid*)offsetof( SpriteVertex, rot ) );
 	glVertexAttribPointer(	2, 2, GL_FLOAT,				GL_FALSE,	sizeof( SpriteVertex ), (GLvoid*)offsetof( SpriteVertex, size ) );
 	glVertexAttribPointer(	3, 4, GL_UNSIGNED_SHORT,	GL_TRUE,	sizeof( SpriteVertex ), (GLvoid*)offsetof( SpriteVertex, texcoords ) );
-	glVertexAttribIPointer( 4, 1, GL_UNSIGNED_BYTE,					sizeof( SpriteVertex ), (GLvoid*)offsetof( SpriteVertex, layer ) );
+	glVertexAttribIPointer( 4, 3, GL_UNSIGNED_BYTE,					sizeof( SpriteVertex ), (GLvoid*)offsetof( SpriteVertex, tileInfo ) );
+	//glVertexAttribIPointer( 5, 2, GL_UNSIGNED_BYTE,					sizeof( SpriteVertex ), (GLvoid*)offsetof( SpriteVertex, tileInfo ) );
 	glBufferData( GL_ARRAY_BUFFER, BATCH_CHUNK_SIZE*sizeof( SpriteVertex ), 0, GL_DYNAMIC_DRAW );
+
+
+	PrintInfo( L"Size %d\n", sizeof( SpriteVertex ) );
+	PrintInfo( L"Offset %d\n", offsetof( SpriteVertex, pos ) );
+	PrintInfo( L"Offset %d\n", offsetof( SpriteVertex, rot ) );
+	PrintInfo( L"Offset %d\n", offsetof( SpriteVertex, size ) );
+	PrintInfo( L"Offset %d\n", offsetof( SpriteVertex, texcoords ) );
+	//PrintInfo( L"Offset %d\n", offsetof( SpriteVertex, layer ) );
+	PrintInfo( L"Offset %d\n", offsetof( SpriteVertex, tileInfo ) );
 
 	EndGLDebug();
 
@@ -77,6 +89,7 @@ void CSpriteManager::drawSprite( int batchId, SpriteData spriteData ) {
 void CSpriteManager::update( double deltaT )
 {
 }
+
 
 void CSpriteManager::draw( int batchId )
 {

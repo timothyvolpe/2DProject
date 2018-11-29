@@ -2,6 +2,8 @@
 
 #include <glm\glm.hpp>
 
+#include "perlin.h"
+
 class CWorld;
 class CBlock;
 
@@ -12,6 +14,8 @@ private:
 	static int GrassDepth;
 
 	CWorld *m_pWorldHandle;
+
+	siv::PerlinNoise m_perlin;
 public:
 	CTerrainGenerator();
 	~CTerrainGenerator();

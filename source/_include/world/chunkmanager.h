@@ -30,7 +30,7 @@ public:
 
 	bool populateChunks();
 
-	void update( glm::ivec2 bottomLeft );
+	void update( glm::vec2 bottomLeft );
 
 	int getChunksRenderedX() const;
 	void setChunksRenderedX( int renderx );
