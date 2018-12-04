@@ -48,8 +48,8 @@ public:
 	void onUpdate( double deltaT );
 	void onPhysTick( double deltaT );
 
-	void onPhysicsBeginContact( b2Fixture *pContactingFixture, CEntityPhysics *pPhysicsObj, CEntityRenderablePhysics *pRenderablePhysicsObj );
-	void onPhysicsEndContact( b2Fixture *pContactingFixture, CEntityPhysics *pPhysicsObj, CEntityRenderablePhysics *pRenderablePhysicsObj );
+	void onPhysicsBeginContact( b2Fixture *pContactingFixture, PhysicsUserdata *pContacteeUD );
+	void onPhysicsEndContact( b2Fixture *pContactingFixture, PhysicsUserdata *pContacteeUD );
 
 	bool isControlledPlayer() const;
 	void setAsControlledPlayer( bool isControlledPlayer );

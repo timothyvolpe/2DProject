@@ -10,11 +10,13 @@
 #include "interface\interfacemanager.h"
 #include "interface\font.h"
 
-CEntityPlatform::CEntityPlatform() {
+CEntityPlatform::CEntityPlatform() : CEntityRenderablePhysics()
+{
 	m_pBody = 0;
 	m_pFixture = 0;
 	m_bStatic = false;
 	m_dimensions = glm::vec2( 1.0f, 1.0f );
+	m_pName = L"platform";
 }
 CEntityPlatform::~CEntityPlatform() {
 }

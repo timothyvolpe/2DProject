@@ -309,21 +309,13 @@ void CWorld::draw( glm::mat4& orthoMat )
 
 	StartGLDebug( "DrawWorld" );
 
-	// Render chunks
-	for( auto it = m_pChunkManager->getChunksRendered().begin(); it != m_pChunkManager->getChunksRendered().end(); it++ )
-	{
+	// Draw chunks
+	for( auto it = m_pChunkManager->getChunksRendered().begin(); it != m_pChunkManager->getChunksRendered().end(); it++ ) {
 		for( auto it2 = (*it).begin(); it2 != (*it).end(); it2++ )
-		{
-			modelMatrix = glm::translate( glm::mat4( 1.0f ), glm::vec3( (*it2)->getPosition() * glm::ivec2( CHUNK_WIDTH_UNITS, CHUNK_HEIGHT_UNITS ), CGraphics::getLayerPosition( LAYER_CHUNKBLOCKS ) ) );
-			mvpMatrix = orthoMat * viewMatrix * modelMatrix;
-			glUniformMatrix4fv( pSpriteProgram->getUniform( "MVPMatrix" ), 1, GL_FALSE, &mvpMatrix[0][0] );
 			(*it2)->draw();
-		}
 	}
 
 	// Draw entities
-	mvpMatrix = orthoMat * viewMatrix;
-	glUniformMatrix4fv( pSpriteProgram->getUniform( "MVPMatrix" ), 1, GL_FALSE, &mvpMatrix[0][0] );
 	for( auto it = m_pDrawArray->getEntityList().begin(); it != m_pDrawArray->getEntityList().end(); it++ )
 		(*it)->onDraw();
 
@@ -344,23 +336,37 @@ void CWorld::draw( glm::mat4& orthoMat )
 	if( m_bDebugDraw )
 	{
 		CGame::getInstance().getGraphics()->getShaderManager()->bind( pDebugProgram );
-		// Chunks
-		/*for( auto it = m_pChunkManager->getChunksRendered().begin(); it != m_pChunkManager->getChunksRendered().end(); it++ )
-		{
-			for( auto it2 = (*it).begin(); it2 != (*it).end(); it2++ )
-			{
-				modelMatrix = glm::translate( glm::mat4( 1.0f ), glm::vec3( (*it2)->getPosition() * glm::ivec2( CHUNK_WIDTH_UNITS, CHUNK_HEIGHT_UNITS ), CGraphics::getLayerPosition( LAYER_CHUNKBLOCKS+1 ) ) );
-				mvpMatrix = orthoMat * viewMatrix * modelMatrix;
-				glUniformMatrix4fv( pDebugProgram->getUniform( "MVPMatrix" ), 1, GL_FALSE, &mvpMatrix[0][0] );
-				(*it2)->debugDraw();
-			}
-		}*/
 
 		// Physics
 		modelMatrix = glm::mat4( 1.0f );
 		mvpMatrix = orthoMat * viewMatrix * modelMatrix;
 		glUniformMatrix4fv( pDebugProgram->getUniform( "MVPMatrix" ), 1, GL_FALSE, &mvpMatrix[0][0] );
+
 		m_pPhysWorld->DrawDebugData();
+
+		// Draw an axis
+		glm::vec2 axisPos( 50, 50 );
+
+		glLineWidth( 4.0f );
+		m_pDebugDraw->DrawSegment( b2Vec2( axisPos.x, axisPos.y ), b2Vec2( axisPos.x, axisPos.y + 1.0f ), b2Color( 1.0f, 0.0f, 0.0f ) );
+		m_pDebugDraw->DrawSegment( b2Vec2( axisPos.x, axisPos.y ), b2Vec2( axisPos.x + 1.0f, axisPos.y ), b2Color( 0.0f, 1.0f, 0.0f ) );
+		glLineWidth( 1.0f );
+
+		// Chunks
+		for( auto it = m_pChunkManager->getChunksRendered().begin(); it != m_pChunkManager->getChunksRendered().end(); it++ )
+		{
+			for( auto it2 = (*it).begin(); it2 != (*it).end(); it2++ )
+			{
+				glm::vec2 chunkPos = glm::vec2( (*it2)->getPosition() * glm::ivec2( CHUNK_WIDTH_UNITS, CHUNK_HEIGHT_UNITS ) );
+
+				m_pDebugDraw->DrawSegment( b2Vec2( chunkPos.x, chunkPos.y ), b2Vec2( chunkPos.x, chunkPos.y + CHUNK_HEIGHT_UNITS ), b2Color( 1.0f, 0.0f, 0.0f ) );
+				m_pDebugDraw->DrawSegment( b2Vec2( chunkPos.x, chunkPos.y + CHUNK_HEIGHT_UNITS ), b2Vec2( chunkPos.x + CHUNK_WIDTH_UNITS, chunkPos.y + CHUNK_HEIGHT_UNITS ), b2Color( 1.0f, 0.0f, 0.0f ) );
+				m_pDebugDraw->DrawSegment( b2Vec2( chunkPos.x + CHUNK_WIDTH_UNITS, chunkPos.y + CHUNK_HEIGHT_UNITS ), b2Vec2( chunkPos.x + CHUNK_WIDTH_UNITS, chunkPos.y ), b2Color( 1.0f, 0.0f, 0.0f ) );
+				m_pDebugDraw->DrawSegment( b2Vec2( chunkPos.x + CHUNK_WIDTH_UNITS, chunkPos.y ), b2Vec2( chunkPos.x, chunkPos.y ), b2Color( 1.0f, 0.0f, 0.0f ) );
+
+				(*it2)->debugDraw();
+			}
+		}
 	}
 
 	EndGLDebug();

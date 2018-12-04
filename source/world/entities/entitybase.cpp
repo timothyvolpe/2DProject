@@ -2,14 +2,14 @@
 #include "world\entities\entitybase.h"
 #include "world\world.h"
 #include "texture.h"
+#include "world\physlistener.h"
 
 /////////////////
 // CEntityBase //
 /////////////////
 
-std::wstring CEntityBase::m_name = L"unknown";
-std::wstring CEntityBase::getName() {
-	return m_name;
+const wchar_t * CEntityBase::getName() {
+	return m_pName;
 }
 
 CEntityBase::CEntityBase() {
@@ -17,6 +17,7 @@ CEntityBase::CEntityBase() {
 	m_origin = glm::vec2( 0.0f, 0.0f );
 	m_rotation = 0.0f;
 	m_bActivated = false;
+	m_pName = L"unknown";
 }
 CEntityBase::~CEntityBase() {
 }
@@ -68,7 +69,7 @@ void CEntityBase::setRotation( float rot ) {
 // CEntityRenderable //
 ///////////////////////
 
-CEntityRenderable::CEntityRenderable() {
+CEntityRenderable::CEntityRenderable() : CEntityBase() {
 	m_layer = 127;
 	m_bOpaque = true;
 
@@ -129,13 +130,12 @@ bool EntityRenderableLayerSort::operator()( const CEntityRenderable *pFirst, con
 
 CEntityPhysicsBase::CEntityPhysicsBase() {
 	m_pUserdata = new PhysicsUserdata();
-	m_pUserdata->pPhysicsObj = 0;
-	m_pUserdata->pRenderablePhysicsObj = 0;
 }
 CEntityPhysicsBase::~CEntityPhysicsBase() {
 	SafeDelete( m_pUserdata );
 }
 void CEntityPhysicsBase::setUserdata( CEntityPhysics *pPhysicsObj, CEntityRenderablePhysics *pRenderablePhysicsObj, b2Body *pBody ) {
+	m_pUserdata->type = USER_DATA_TYPE_ENTITIES;
 	m_pUserdata->pPhysicsObj = pPhysicsObj;
 	m_pUserdata->pRenderablePhysicsObj = pRenderablePhysicsObj;
 	pBody->SetUserData( m_pUserdata );
@@ -145,7 +145,7 @@ void CEntityPhysicsBase::setUserdata( CEntityPhysics *pPhysicsObj, CEntityRender
 // CEntityPhysics //
 ////////////////////
 
-CEntityPhysics::CEntityPhysics() {
+CEntityPhysics::CEntityPhysics() : CEntityBase(), CEntityPhysicsBase() {
 }
 CEntityPhysics::~CEntityPhysics() {
 }
@@ -154,7 +154,7 @@ CEntityPhysics::~CEntityPhysics() {
 // CEntityRenderablePhysics //
 //////////////////////////////
 
-CEntityRenderablePhysics::CEntityRenderablePhysics() {
+CEntityRenderablePhysics::CEntityRenderablePhysics() : CEntityRenderable(), CEntityPhysicsBase() {
 }
 CEntityRenderablePhysics::~CEntityRenderablePhysics() {
 }

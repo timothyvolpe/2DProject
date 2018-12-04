@@ -6,6 +6,7 @@
 #include "texturemanager.h"
 #include "world\terraingen\terraingen.h"
 #include "world\spritemanager.h"
+#include "world\physlistener.h"
 #include "blocks\block.h"
 #include "renderutil.h"
 
@@ -24,8 +25,23 @@ bool CChunk::initialize()
 }
 void CChunk::destroy()
 {
+	b2World *pPhysWorld = CGame::getInstance().getWorld()->getPhysicalWorld();
+
 	memset( &m_blocks[0], 0, sizeof( m_blocks ) );
 	m_chunkQuads.clear();
+	
+	// Clean up bodies
+	assert( m_pChunkBodies.size() == m_pChunkFixtures.size() );
+	for( size_t i = 0; i < m_pChunkBodies.size(); i++ )
+	{
+		PhysicsUserdata *pUserData;
+		pUserData = reinterpret_cast<PhysicsUserdata*>(m_pChunkBodies[i]->GetUserData());
+		m_pChunkBodies[i]->DestroyFixture( m_pChunkFixtures[i] );
+		pPhysWorld->DestroyBody( m_pChunkBodies[i] );
+		SafeDelete( pUserData );
+	}
+	m_pChunkBodies.clear();
+	m_pChunkFixtures.clear();
 }
 
 bool CChunk::populateChunk()
@@ -33,6 +49,9 @@ bool CChunk::populateChunk()
 	CWorld *pWorld = CGame::getInstance().getWorld();
 	bool isBlockMeshed[CHUNK_WIDTH_BLOCKS][CHUNK_HEIGHT_BLOCKS];
 	bool breakScan;
+
+	// Clean up old data
+	this->destroy();
 
 	// Populate the chunks blocks
 	for( size_t x = 0; x < CHUNK_WIDTH_BLOCKS; x++ ) {
@@ -42,7 +61,6 @@ bool CChunk::populateChunk()
 		}
 	}
 
-	m_chunkQuads.clear();
 	memset( &isBlockMeshed[0], 0, sizeof( isBlockMeshed ) );
 
 	// Generate an optimized mesh
@@ -70,8 +88,6 @@ bool CChunk::populateChunk()
 				isBlockMeshed[x2][y] = true;
 			}
 
-			//PrintWarn( L"x2: %d\n", x2 );
-
 			// Scan to find the bottomost edge of the quad
 			breakScan = false;
 			for( y2 = y+1; y2 < CHUNK_HEIGHT_BLOCKS && !breakScan; y2++ )
@@ -87,8 +103,6 @@ bool CChunk::populateChunk()
 				}
 			}
 
-			//PrintWarn( L"y2: %d\n", y2 );
-
 			// Create the quad
 			ChunkQuad q;
 			q.pBlock = m_blocks[x][y];
@@ -96,6 +110,45 @@ bool CChunk::populateChunk()
 			q.size = glm::ivec2( x2 - x, y2 - y );
 			m_chunkQuads.push_back( q );
 		}
+	}
+
+	// Create physic bodies
+	glm::vec2 posOffset = glm::vec2( this->getPosition() ) * glm::vec2( CHUNK_WIDTH_UNITS, CHUNK_HEIGHT_UNITS );
+	m_pChunkBodies.reserve( m_chunkQuads.size() );
+	m_pChunkFixtures.reserve( m_chunkQuads.size() );
+	for( auto it = m_chunkQuads.begin(); it != m_chunkQuads.end(); it++ )
+	{
+		b2Body *pBody;
+		b2Fixture *pFixture;
+		b2BodyDef bd;
+		b2PolygonShape sd;
+		b2FixtureDef fd;
+		PhysicsUserdata *pUserData;
+
+		// Create body
+		bd.type = b2_staticBody;
+		bd.position.Set( (float32)(*it).relativePosition.x*CHUNK_BLOCK_SIZE + posOffset.x, (float32)(*it).relativePosition.y*CHUNK_BLOCK_SIZE + posOffset.y );
+		bd.userData = 0;
+		bd.fixedRotation = true;
+		pBody = CGame::getInstance().getWorld()->getPhysicalWorld()->CreateBody( &bd );
+
+		// Create fixture
+		//sd.SetAsBox( (*it).size.x / 2.0f, (*it).size.y / 2.0f, b2Vec2( 0, 0 ), 0.0f );
+		b2Vec2 boxSize( (*it).size.x * CHUNK_BLOCK_SIZE, (*it).size.y * CHUNK_BLOCK_SIZE );
+		sd.SetAsBox( boxSize.x / 2.0f, boxSize.y / 2.0f, boxSize - b2Vec2( boxSize.x / 2.0f, boxSize.y / 2.0f ), 0.0f );
+		fd.shape = &sd;
+		fd.density = 1.0f;
+		pFixture = pBody->CreateFixture( &fd );
+
+		// Set userdata
+		pUserData = new PhysicsUserdata();
+		pUserData->type = USER_DATA_TYPE_CHUNKS;
+		pUserData->pPhysicsObj = 0;
+		pUserData->pRenderablePhysicsObj = 0;
+		pBody->SetUserData( pUserData );
+
+		m_pChunkBodies.push_back( pBody );
+		m_pChunkFixtures.push_back( pFixture );
 	}
 
 	return true;
@@ -113,7 +166,7 @@ void CChunk::draw()
 	{
 		sd.layer = LAYER_CHUNKBLOCKS;
 		sd.size = glm::vec2( CHUNK_BLOCK_SIZE * (*it).size.x, CHUNK_BLOCK_SIZE * (*it).size.y );
-		sd.position = (glm::vec2( (*it).relativePosition.x*CHUNK_BLOCK_SIZE, (*it).relativePosition.y*CHUNK_BLOCK_SIZE )+ sd.size / 2.0f) + (glm::vec2( this->getPosition() ) * glm::vec2( CHUNK_WIDTH_UNITS, CHUNK_HEIGHT_UNITS ));
+		sd.position = (glm::vec2( (*it).relativePosition.x*CHUNK_BLOCK_SIZE, (*it).relativePosition.y*CHUNK_BLOCK_SIZE ) + sd.size / 2.0f) + (glm::vec2( this->getPosition() ) * glm::vec2( CHUNK_WIDTH_UNITS, CHUNK_HEIGHT_UNITS ));
 		sd.rotation = 0.0f;
 		sd.texcoords = (*it).pBlock->getTextureTileCoords();
 		sd.tileInfo[0] = (*it).size.x;
@@ -124,7 +177,7 @@ void CChunk::draw()
 
 void CChunk::debugDraw()
 {
-	/*glBegin( GL_LINE_STRIP );
+	glBegin( GL_LINE_STRIP );
 	{
 		glColor3f( 1.0f, 0.0f, 0.0f );
 		glVertex2f( 0, 0 );
@@ -137,7 +190,7 @@ void CChunk::debugDraw()
 		glColor3f( 1.0f, 0.0f, 0.0f );
 		glVertex2f( 0, 0 );
 	}
-	glEnd();*/
+	glEnd();
 }
 
 glm::ivec2 CChunk::getPosition() const {

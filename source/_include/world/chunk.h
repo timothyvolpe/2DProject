@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Box2D\Box2D.h>
+
 #define CHUNK_WIDTH_BLOCKS 16
 #define CHUNK_HEIGHT_BLOCKS 16
 #define CHUNK_BLOCK_SIZE 0.5f // meters
@@ -26,6 +28,8 @@ private:
 	glm::ivec2 m_relativePosition;
 
 	std::vector<ChunkQuad> m_chunkQuads;
+	std::vector<b2Body*> m_pChunkBodies;
+	std::vector<b2Fixture*> m_pChunkFixtures;
 public:
 	CChunk();
 	~CChunk();

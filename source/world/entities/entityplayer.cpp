@@ -7,13 +7,14 @@
 #include "texturemanager.h"
 #include "world\world.h"
 #include "world\spritemanager.h"
+#include "world\physlistener.h"
 #include "renderutil.h"
 
 float CEntityPlayer::BaseMovementSpeed = 5.0f;
 float CEntityPlayer::BaseRunSpeed = 10.0f;
 float CEntityPlayer::BaseWalkSpeed = 2.5f;
 
-CEntityPlayer::CEntityPlayer()
+CEntityPlayer::CEntityPlayer() : CEntityRenderablePhysics()
 {
 	m_bControlledPlayer = true;
 
@@ -24,6 +25,12 @@ CEntityPlayer::CEntityPlayer()
 	m_iWalkableSurfacesContacting = 0;
 
 	m_jumpCooldown = 0;
+
+	m_pPlayerFixture = 0;
+	m_pPlayerJumpSensor = 0;
+	m_pPlayerBody = 0;
+
+	m_pName = L"player";
 }
 CEntityPlayer::~CEntityPlayer()
 {
@@ -47,7 +54,8 @@ bool CEntityPlayer::onCreate()
 }
 void CEntityPlayer::onDestroy()
 {
-	if( m_pPlayerBody ) {
+	if( m_pPlayerBody )
+	{
 		if( m_pPlayerFixture ) {
 			m_pPlayerBody->DestroyFixture( m_pPlayerFixture );
 			m_pPlayerFixture = 0;
@@ -74,6 +82,7 @@ bool CEntityPlayer::onActivate()
 	bodyDef.userData = 0;
 	bodyDef.fixedRotation = true;
 	m_pPlayerBody = CGame::getInstance().getWorld()->getPhysicalWorld()->CreateBody( &bodyDef );
+
 	this->setUserdata( 0, this, m_pPlayerBody );
 	// Player fixture
 	playerSize = PLAYER_SPRITE_SIZE * m_fPlayerScale;
@@ -150,8 +159,9 @@ void CEntityPlayer::onPhysTick( double deltaT )
 	if( m_movementFlags & MOVEMENTSTATE_JUMP && m_iWalkableSurfacesContacting > 0 && m_jumpCooldown <= 0 ) {
 		jumpImpulse = m_pPlayerBody->GetMass() * 3.0f;
 		m_pPlayerBody->ApplyLinearImpulse( b2Vec2( 0, jumpImpulse ), m_pPlayerBody->GetWorldCenter(), true );
-		m_jumpCooldown = PLAYER_JUMP_COOLDOWN;
 	}
+	if( m_jumpCooldown <= 0 )
+		m_jumpCooldown = PLAYER_JUMP_COOLDOWN;
 	// Apply movement forces
 	if( m_movementFlags & MOVEMENTSTATE_LEFT ) {
 		if( velocity.x > -m_fPlayerMaxSpeed )
@@ -166,19 +176,20 @@ void CEntityPlayer::onPhysTick( double deltaT )
 	m_pPlayerBody->ApplyLinearImpulse( impulse, m_pPlayerBody->GetWorldCenter(), true );
 }
 
-void CEntityPlayer::onPhysicsBeginContact( b2Fixture *pContactingFixture, CEntityPhysics *pPhysicsObj, CEntityRenderablePhysics *pRenderablePhysicsObj )
+void CEntityPlayer::onPhysicsBeginContact( b2Fixture *pContactingFixture, PhysicsUserdata *pContacteeUD )
 {
 	int fixtureId;
 
 	// Check the fixture ID
 	fixtureId = (int)pContactingFixture->GetUserData();
+
 	// Check if we're contacting a valid walkable surface
 	if( fixtureId == PLAYERFIXTUREID_JUMPSENSOR ) {
-		if( pRenderablePhysicsObj )
+		if( pContacteeUD->type == USER_DATA_TYPE_ENTITIES || pContacteeUD->type == USER_DATA_TYPE_CHUNKS )
 			m_iWalkableSurfacesContacting++;
 	}
 }
-void CEntityPlayer::onPhysicsEndContact( b2Fixture *pContactingFixture, CEntityPhysics *pPhysicsObj, CEntityRenderablePhysics *pRenderablePhysicsObj )
+void CEntityPlayer::onPhysicsEndContact( b2Fixture *pContactingFixture, PhysicsUserdata *pContacteeUD )
 {
 	int fixtureId;
 
@@ -186,7 +197,7 @@ void CEntityPlayer::onPhysicsEndContact( b2Fixture *pContactingFixture, CEntityP
 	fixtureId = (int)pContactingFixture->GetUserData();
 	// Check if we're leaving a valid walkable surface
 	if( fixtureId == PLAYERFIXTUREID_JUMPSENSOR ) {
-		if( pRenderablePhysicsObj )
+		if( pContacteeUD->type == USER_DATA_TYPE_ENTITIES || pContacteeUD->type == USER_DATA_TYPE_CHUNKS )
 			m_iWalkableSurfacesContacting--;
 	}
 }

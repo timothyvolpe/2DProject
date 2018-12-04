@@ -11,16 +11,14 @@
 class CEntityBase
 {
 private:
-	static std::wstring m_name;
-
 	glm::vec2 m_position;
 	glm::vec2 m_origin;
 	float m_rotation;
 
 	bool m_bActivated;
+protected:
+	const wchar_t *m_pName;
 public:
-	static std::wstring getName();
-
 	CEntityBase();
 	virtual ~CEntityBase();
 
@@ -47,6 +45,8 @@ public:
 	void setOrigin( glm::vec2 origin );
 	float getRotation() const;
 	void setRotation( float rot );
+
+	const wchar_t* getName();
 
 	virtual bool isRenderable() { return false; }
 };
@@ -101,10 +101,7 @@ struct EntityRenderableLayerSort {
 class CEntityPhysics;
 class CEntityRenderablePhysics;
 
-struct PhysicsUserdata {
-	CEntityPhysics *pPhysicsObj;
-	CEntityRenderablePhysics *pRenderablePhysicsObj;
-};
+struct PhysicsUserdata;
 
 class CEntityPhysicsBase
 {
@@ -116,8 +113,8 @@ public:
 	CEntityPhysicsBase();
 	~CEntityPhysicsBase();
 
-	virtual void onPhysicsBeginContact( b2Fixture *pContactingFixture, CEntityPhysics *pPhysicsObj, CEntityRenderablePhysics *pRenderablePhysicsObj ) {}
-	virtual void onPhysicsEndContact( b2Fixture *pContactingFixture, CEntityPhysics *pPhysicsObj, CEntityRenderablePhysics *pRenderablePhysicsObj ) {}
+	virtual void onPhysicsBeginContact( b2Fixture *pContactingFixture, PhysicsUserdata *pContacteeUD ) {}
+	virtual void onPhysicsEndContact( b2Fixture *pContactingFixture, PhysicsUserdata *pContacteeUD ) {}
 };
 
 ////////////////////

@@ -7,10 +7,11 @@
 #include "world\spritemanager.h"
 #include "renderutil.h"
 
-CEntityStress::CEntityStress() {
+CEntityStress::CEntityStress() : CEntityRenderablePhysics() {
 	m_pFixture = 0;
 	m_pBody = 0;
 	m_dimensions = glm::vec2( 0.4f, 0.2f );
+	m_pName = L"stress";
 }
 CEntityStress::~CEntityStress() {
 }
