@@ -8,7 +8,6 @@
 #include "world\spritemanager.h"
 #include "world\physlistener.h"
 #include "blocks\block.h"
-#include "renderutil.h"
 
 CChunk::CChunk() {
 	m_position = glm::ivec2( 0, 0 );
@@ -173,24 +172,6 @@ void CChunk::draw()
 		sd.tileInfo[1] = (*it).size.y;
 		CGame::getInstance().getWorld()->getSpriteManager()->drawSprite( (*it).pBlock->getBatchId(), sd );
 	}
-}
-
-void CChunk::debugDraw()
-{
-	glBegin( GL_LINE_STRIP );
-	{
-		glColor3f( 1.0f, 0.0f, 0.0f );
-		glVertex2f( 0, 0 );
-		glColor3f( 1.0f, 0.0f, 0.0f );
-		glVertex2f( CHUNK_WIDTH_UNITS, 0 );
-		glColor3f( 1.0f, 0.0f, 0.0f );
-		glVertex2f( CHUNK_WIDTH_UNITS, CHUNK_HEIGHT_UNITS );
-		glColor3f( 1.0f, 0.0f, 0.0f );
-		glVertex2f( 0, CHUNK_HEIGHT_UNITS );
-		glColor3f( 1.0f, 0.0f, 0.0f );
-		glVertex2f( 0, 0 );
-	}
-	glEnd();
 }
 
 glm::ivec2 CChunk::getPosition() const {

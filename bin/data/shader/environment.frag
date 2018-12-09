@@ -1,5 +1,7 @@
 #version 150
 
+in vec2 vTexcoords;
+
 uniform vec2 screenResolution;
 uniform int drawMode;
 
@@ -22,6 +24,7 @@ void main()
 	}
 	else if( drawMode == 1 ) // mountains
 	{
-		gl_FragColor = texture2D( tex2dsampler, gl_TexCoord[0].st );
+		gl_FragColor = texture2D( tex2dsampler, vTexcoords );
+		//gl_FragColor = vec4( 1.0f, 0.0f, 0.0f, 1.0f );
 	}
 }

@@ -19,11 +19,12 @@ enum : int
 #pragma pack(push, 4)
 typedef struct {
 	glm::vec2 pos, texcoords;
-	unsigned char unused[24];
+	unsigned char layer;
+	unsigned char unused[7];
 } EnvVertex;
 #pragma pack(pop)
 
-EnvVertex CreateEnvVertex( glm::vec2 pos, glm::vec2 texcoords );
+EnvVertex CreateEnvVertex( glm::vec2 pos, glm::vec2 texcoords, unsigned char layer );
 
 class CEnvironment
 {

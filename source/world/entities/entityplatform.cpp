@@ -5,7 +5,6 @@
 #include "graphics.h"
 #include "world\world.h"
 #include "world\spritemanager.h"
-#include "renderutil.h"
 
 #include "interface\interfacemanager.h"
 #include "interface\font.h"

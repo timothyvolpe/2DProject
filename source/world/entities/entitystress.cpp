@@ -5,7 +5,6 @@
 #include "texturemanager.h"
 #include "world\world.h"
 #include "world\spritemanager.h"
-#include "renderutil.h"
 
 CEntityStress::CEntityStress() : CEntityRenderablePhysics() {
 	m_pFixture = 0;

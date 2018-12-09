@@ -79,7 +79,6 @@ void CSpriteManager::update( double deltaT )
 {
 }
 
-
 void CSpriteManager::draw( int batchId )
 {
 	SpriteVertex* pVerticesPtr;

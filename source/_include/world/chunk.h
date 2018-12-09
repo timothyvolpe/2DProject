@@ -40,7 +40,6 @@ public:
 	bool populateChunk();
 
 	void draw();
-	void debugDraw();
 
 	glm::ivec2 getPosition() const;
 	void setPosition( glm::ivec2 pos );

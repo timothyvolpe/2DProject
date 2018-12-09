@@ -303,11 +303,11 @@ void CWorld::draw( glm::mat4& orthoMat )
 
 	// Sort the draw list
 	m_pDrawArray->sortByLayer();
+	
+	StartGLDebug( "DrawWorld" );
 
 	// Draw the environment background
 	m_pEnvironment->draw( ENV_LAYER_BACKGROUND, orthoMat );
-
-	StartGLDebug( "DrawWorld" );
 
 	// Draw chunks
 	for( auto it = m_pChunkManager->getChunksRendered().begin(); it != m_pChunkManager->getChunksRendered().end(); it++ ) {
@@ -363,8 +363,6 @@ void CWorld::draw( glm::mat4& orthoMat )
 				m_pDebugDraw->DrawSegment( b2Vec2( chunkPos.x, chunkPos.y + CHUNK_HEIGHT_UNITS ), b2Vec2( chunkPos.x + CHUNK_WIDTH_UNITS, chunkPos.y + CHUNK_HEIGHT_UNITS ), b2Color( 1.0f, 0.0f, 0.0f ) );
 				m_pDebugDraw->DrawSegment( b2Vec2( chunkPos.x + CHUNK_WIDTH_UNITS, chunkPos.y + CHUNK_HEIGHT_UNITS ), b2Vec2( chunkPos.x + CHUNK_WIDTH_UNITS, chunkPos.y ), b2Color( 1.0f, 0.0f, 0.0f ) );
 				m_pDebugDraw->DrawSegment( b2Vec2( chunkPos.x + CHUNK_WIDTH_UNITS, chunkPos.y ), b2Vec2( chunkPos.x, chunkPos.y ), b2Color( 1.0f, 0.0f, 0.0f ) );
-
-				(*it2)->debugDraw();
 			}
 		}
 	}

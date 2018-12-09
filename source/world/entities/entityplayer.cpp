@@ -8,7 +8,6 @@
 #include "world\world.h"
 #include "world\spritemanager.h"
 #include "world\physlistener.h"
-#include "renderutil.h"
 
 float CEntityPlayer::BaseMovementSpeed = 5.0f;
 float CEntityPlayer::BaseRunSpeed = 10.0f;

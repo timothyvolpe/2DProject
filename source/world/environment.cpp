@@ -7,13 +7,13 @@
 #include "config.h"
 #include "shader\shader.h"
 #include "shader\shadermanager.h"
-#include "renderutil.h"
 
-EnvVertex CreateEnvVertex( glm::vec2 pos, glm::vec2 texcoords )
+EnvVertex CreateEnvVertex( glm::vec2 pos, glm::vec2 texcoords, unsigned char layer )
 {
 	EnvVertex vertex;
 	vertex.pos = pos;
 	vertex.texcoords = texcoords;
+	vertex.layer = layer;
 	return vertex;
 }
 
@@ -42,6 +42,7 @@ bool CEnvironment::initialize()
 	glEnableVertexAttribArray( 1 );
 	glVertexAttribPointer( 0, 2, GL_FLOAT, GL_FALSE, sizeof( EnvVertex ), (GLvoid*)offsetof( EnvVertex, pos ) );
 	glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, sizeof( EnvVertex ), (GLvoid*)offsetof( EnvVertex, texcoords ) );
+	glVertexAttribIPointer( 2, 1, GL_UNSIGNED_BYTE, sizeof( EnvVertex ), (GLvoid*)offsetof( EnvVertex, layer ) );
 
 	m_pVertices = new EnvVertex[ENV_QUAD_COUNT*4];
 	glBufferData( GL_ARRAY_BUFFER, sizeof( EnvVertex ) * ENV_QUAD_COUNT * 4, m_pVertices, GL_STREAM_DRAW );
@@ -50,8 +51,8 @@ bool CEnvironment::initialize()
 	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, m_iboId );
 
 	// Indices
-	unsigned int pIndices[] = { 0, 0, 0, 0, 0, 0,
-								0, 0, 0, 0, 0, 0 };
+	unsigned int pIndices[] = { 0, 1, 2, 2, 1, 3,
+								0, 1, 2, 2, 1, 3 };
 	glBufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof( unsigned int ) * ENV_QUAD_COUNT * 6, pIndices, GL_STATIC_DRAW );
 
 	EndGLDebug();
@@ -99,31 +100,36 @@ void CEnvironment::draw( unsigned char worldLayer, glm::mat4 orthoMatrix )
 	bgHeight = (float)CGame::getInstance().getConfig()->m_resolutionY / (float)CGame::getInstance().getGraphics()->getPixelsPerMeter();
 	screenResolution = glm::vec2( (float)CGame::getInstance().getConfig()->m_resolutionX, (float)CGame::getInstance().getConfig()->m_resolutionY );
 
-	CGame::getInstance().getGraphics()->getShaderManager()->bind( pEnvProgram );
-
-	m_pVertices[0] = CreateEnvVertex( glm::vec2( 0, 0 ), glm::vec2( 0, 0 ) );
-	m_pVertices[1] = CreateEnvVertex( glm::vec2( 0, 0 ), glm::vec2( 0, 0 ) );
-	m_pVertices[2] = CreateEnvVertex( glm::vec2( 0, 0 ), glm::vec2( 0, 0 ) );
-	m_pVertices[3] = CreateEnvVertex( glm::vec2( 0, 0 ), glm::vec2( 0, 0 ) );
-
 	StartGLDebug( "DrawEnvironment" );
 
+	CGame::getInstance().getGraphics()->getShaderManager()->bind( pEnvProgram );
+
+	// Draw quads
+	m_pVertices[0] = CreateEnvVertex( glm::vec2( 0, 0 ), glm::vec2( 0, 1 ), worldLayer );
+	m_pVertices[1] = CreateEnvVertex( glm::vec2( bgWidth, 0 ), glm::vec2( 1, 1 ), worldLayer );
+	m_pVertices[2] = CreateEnvVertex( glm::vec2( 0, bgHeight ), glm::vec2( 0, 0 ), worldLayer );
+	m_pVertices[3] = CreateEnvVertex( glm::vec2( bgWidth, bgHeight ), glm::vec2( 1, 0 ), worldLayer );
+	glBindBuffer( GL_ARRAY_BUFFER, m_vboId );
+	glBufferData( GL_ARRAY_BUFFER, sizeof( EnvVertex ) * ENV_QUAD_COUNT * 4, &m_pVertices[0], GL_STREAM_DRAW );
+
+	glBindVertexArray( m_vaoId );
+	// Render quads
+	modelMatrix = glm::mat4( 1.0f );
+	mvpMatrix = orthoMatrix * viewMatrix * modelMatrix;
+	glUniformMatrix4fv( pEnvProgram->getUniform( "MVPMatrix" ), 1, GL_FALSE, &mvpMatrix[0][0] );
+	glUniform2fv( pEnvProgram->getUniform( "screenResolution" ), 1, &screenResolution[0] );
 	switch( worldLayer )
 	{
 	case ENV_LAYER_BACKGROUND:
-		modelMatrix = glm::translate( glm::mat4( 1.0f ), glm::vec3( 0.0f, 0.0f, CGraphics::getLayerPosition( LAYER_WORLD_BACKGROUND ) ) );
-		mvpMatrix = orthoMatrix * viewMatrix * modelMatrix;
-		glUniformMatrix4fv( pEnvProgram->getUniform( "MVPMatrix" ), 1, GL_FALSE, &mvpMatrix[0][0] );
-		glUniform2fv( pEnvProgram->getUniform( "screenResolution" ), 1, &screenResolution[0] );
 
 		// Draw the sky
 		glUniform1i( pEnvProgram->getUniform( "drawMode" ), ENV_DRAWMODE_SKY );
-		CRenderUtil::drawSprite( glm::vec2( 0.0f, 0.0f ), glm::vec2( bgWidth, bgHeight ) );
+		glDrawElements( GL_TRIANGLES, 6, GL_UNSIGNED_INT, (GLvoid*)(6 * sizeof(unsigned int)) );
 
 		// Draw the mountains
-		m_pMountainTexture->bind( 0 );
 		glUniform1i( pEnvProgram->getUniform( "drawMode" ), ENV_DRAWMODE_MOUNTAINS );
-		CRenderUtil::drawSpriteTextured( glm::vec2( 0.0f, 0.0f ), glm::vec2( bgWidth, bgHeight ), glm::vec4( 0.0f, 0.0f, 1.0f, 1.0f ) );
+		m_pMountainTexture->bind( 0 );
+		glDrawElements( GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0 );
 
 		break;
 	case ENV_LAYER_FOREGROUND:

@@ -102,10 +102,16 @@ bool CShaderManager::loadPrograms()
 	uniforms.push_back( "MVPMatrix" );
 	uniforms.push_back( "screenResolution" );
 	uniforms.push_back( "drawMode" );
+	uniforms.push_back( "tex2dsampler" );
+	attribLocations.push_back( std::pair<int, std::string>( 0, "in_pos" ) );
+	attribLocations.push_back( std::pair<int, std::string>( 1, "in_texcoords" ) );
+	attribLocations.push_back( std::pair<int, std::string>( 2, "in_layer" ) );
 	if( !this->createAndLoadProgram( L"environment", true, false, true, uniforms, attribLocations ) )
 		return false;
 	uniforms.clear();
 	attribLocations.clear();
+	this->bind( this->getShaderProgram( L"environment" ) );
+	glUniform1i( this->getShaderProgram( L"environment" )->getUniform( "tex2dsampler" ), 0 );
 	// Interface
 	uniforms.push_back( "MVPMatrix" );
 	attribLocations.push_back( std::pair<int, std::string>( 0, "in_pos" ) );

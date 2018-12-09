@@ -79,12 +79,14 @@ bool CGraphics::initialize()
 		PrintError( L"Failed to initialize GLEW (code: %d)", glewError );
 		return false;
 	}
+	else
+		glGetError(); // glewInit throws an error
 
 	// Print some OpenGL info
 	PrintInfo( L"  Requested OpenGL version %d.%d\n", GAME_GLVERSION_MAJ, GAME_GLVERSION_MIN );
 	PrintInfo( L"  Using OpenGL version %hs\n  Using GLSL version %hs\n", glGetString( GL_VERSION ), glGetString( GL_SHADING_LANGUAGE_VERSION ) );
 	PrintInfo( L"  Vendor: %hs\n  Renderer: %hs\n", glGetString( GL_VENDOR ), glGetString( GL_RENDERER ) );
-
+	
 	this->setupGraphics();
 
 	// Initialize shaders
@@ -131,9 +133,9 @@ void CGraphics::setupGraphics()
 	glClearColor( 0.0f, 0.0f, 0.0f, 1.0f );
 	glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 
-	glEnable( GL_TEXTURE_2D );
+	//glEnable( GL_TEXTURE_2D );
 	glEnable( GL_MULTISAMPLE );
-	//glEnable( GL_CULL_FACE );
+	glEnable( GL_CULL_FACE );
 	glEnable( GL_DEPTH_TEST );
 	glDepthFunc( GL_LEQUAL );
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
@@ -160,14 +162,13 @@ void CGraphics::draw()
 
 	viewMatrix = glm::lookAt( glm::vec3( 0.0f, 0.0f, 1.0f ), glm::vec3( 0.0f, 0.0f, 0.0f ), glm::vec3( 0.0f, 1.0f, 0.0f ) );
 
-	
-
 	// Draw the world
 	CGame::getInstance().getWorld()->draw( m_orthoMatrix );
 	// Draw the interface
 	CGame::getInstance().getInterfaceManager()->draw( m_interfaceOrthoMatrix );
-
+	StartGLDebug( "SwapWindow" );
 	SDL_GL_SwapWindow( m_pGameWindowHandle );
+	EndGLDebug();
 
 	// Check for GL errors
 #ifndef DEBUG_OPENGL
