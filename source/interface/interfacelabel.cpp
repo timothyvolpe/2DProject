@@ -5,7 +5,7 @@
 
 CInterfaceLabel::CInterfaceLabel() {
 	m_pFontHandle = 0;
-	m_text = L"TEST! gajay";
+	m_text = L"FPS: 243";
 }
 CInterfaceLabel::~CInterfaceLabel() {
 }
@@ -37,17 +37,15 @@ void CInterfaceLabel::onDraw()
 		int vertCur = 0;
 		for( size_t i = 0; i < m_text.size(); i++ )
 		{
-			if( m_text[i] == ' ' ) {
-				horiCur += 5;
-				continue;
-			}
-
 			pGlyph = m_pFontHandle->getGlyph( m_text[i] );
 			if( !pGlyph )
 				continue;
 
-			quad.absPos = this->getAbsolutePosition() + glm::ivec2( horiCur, vertCur + pGlyph->metrics.descender );
-			horiCur += pGlyph->metrics.horizAdvance;
+			quad.absPos = this->getAbsolutePosition() + glm::ivec2( horiCur, vertCur );
+			horiCur += pGlyph->width;
+			// Kerning?
+			//if( i != m_text.size()-1 )
+				//horiCur -= m_pFontHandle->getPixelKerning( m_text[i], m_text[i+1] );
 			quad.absSize = glm::vec2( pGlyph->width, pGlyph->height );
 			quad.textureId = 0;
 			quad.interfaceLayer = 0;

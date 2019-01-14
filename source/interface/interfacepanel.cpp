@@ -26,10 +26,11 @@ void CInterfacePanel::onDraw()
 
 	quad.absPos = this->getAbsolutePosition();
 	quad.absSize = this->getSize();
-	quad.textureId = 0;
+	quad.textureId = -1;
 	quad.interfaceLayer = 0;
 	quad.tex_start = glm::vec2( 0.0f, 0.0f );
 	quad.tex_stop = glm::vec2( 1.0f, 1.0f );
+	quad.color = glm::ivec3( 200, 200, 200 );
 
 	CGame::getInstance().getInterfaceManager()->drawQuad( quad );
 }

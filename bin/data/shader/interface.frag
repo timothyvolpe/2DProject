@@ -40,7 +40,7 @@ void main()
 		
 		float distance = texture2D( tex2dsampler, vTexCoords ).r;
 		float alpha = smoothstep( 0.5 - smoothing, 0.5 + smoothing, distance );
-		gl_FragColor = vec4( vColor.rgb, alpha );
+		gl_FragColor = mix( vec4( 0.0f, 0.0f, 0.0f, 0.0f ), vec4( vColor.rgb, 1.0f ), alpha );
 	}
 	else
 		gl_FragColor = vec4( vColor, 1.0f );

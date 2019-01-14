@@ -78,7 +78,12 @@ bool CFont::initialize( bool systemFont, std::wstring const& fontFile )
 
 	return true;
 }
-void CFont::destroy() {
+void CFont::destroy()
+{
+	if( m_cacheFace ) {
+		FT_Done_Face( m_cacheFace );
+		m_cacheFace = 0;
+	}
 	this->ClearCache();
 	m_fontFileName = L"";
 	DestroyDelete( m_pFontMap );
@@ -94,7 +99,6 @@ bool CFont::CacheCharacters( const wchar_t *pCharacters, size_t characterCount )
 	{
 		FT_UInt glyphIndex;
 		FT_Error ftError;
-		FT_Bitmap convertedBitmap;
 		CachedGlyph cachedGlyph;
 		unsigned char *pTempBuffer;
 
@@ -116,28 +120,33 @@ bool CFont::CacheCharacters( const wchar_t *pCharacters, size_t characterCount )
 			continue;
 		}
 
-		
-		// Convert the bitmap
-		FT_Bitmap_New( &convertedBitmap );
-		ftError = FT_Bitmap_Convert( CGame::getInstance().getFreeType(), &m_cacheFace->glyph->bitmap, &convertedBitmap, 1 );
-		if( ftError != 0 ) {
-			PrintWarn( L"Failed to convert glyph (%c) in font \'%s\' (code: %d, '%hs')\n", pCharacters[i], m_fontFileName.c_str(), ftError, GetFreetypeError( ftError ) );
-			FT_Bitmap_Done( CGame::getInstance().getFreeType(), &convertedBitmap );
-			continue;
-		}
-
 		// Store the glyphs data
 		cachedGlyph.character = pCharacters[i];
-		cachedGlyph.width = convertedBitmap.width;
-		cachedGlyph.rows = convertedBitmap.rows;
-		cachedGlyph.pitch = convertedBitmap.pitch;
-		cachedGlyph.bufferSize = cachedGlyph.rows*cachedGlyph.pitch;
-		cachedGlyph.pBuffer = new unsigned char[cachedGlyph.bufferSize];
+		cachedGlyph.width = m_cacheFace->glyph->bitmap.width;
+		cachedGlyph.rows = m_cacheFace->glyph->bitmap.rows;
+		cachedGlyph.pitch = m_cacheFace->glyph->bitmap.pitch;
 		cachedGlyph.metrics.horizAdvance = m_cacheFace->glyph->metrics.horiAdvance / FT_HRES;
 		cachedGlyph.metrics.vertAdvance = m_cacheFace->glyph->metrics.vertAdvance / FT_HRES;
-		cachedGlyph.metrics.descender = (m_cacheFace->glyph->metrics.height - m_cacheFace->glyph->metrics.horiBearingY) / FT_HRES;
-		cachedGlyph.padding = { 1, 1, 1, 1 };
-		memcpy( cachedGlyph.pBuffer, convertedBitmap.buffer, cachedGlyph.bufferSize );
+		cachedGlyph.metrics.descent = (m_cacheFace->glyph->metrics.height - m_cacheFace->glyph->metrics.horiBearingY) / FT_HRES;
+		cachedGlyph.metrics.ascent = m_cacheFace->glyph->metrics.horiBearingY / FT_HRES;
+		cachedGlyph.padding = { 1, (m_cacheFace->ascender / FT_HRES) - cachedGlyph.metrics.ascent, 1, (-m_cacheFace->descender / FT_HRES) - cachedGlyph.metrics.descent };
+
+		// Check if glyph is special char
+		if( pCharacters[i] == L' ' ) {
+			cachedGlyph.width = cachedGlyph.metrics.horizAdvance;
+			cachedGlyph.rows = 1;
+			cachedGlyph.bufferSize = cachedGlyph.rows*cachedGlyph.width;
+			cachedGlyph.pBuffer = new unsigned char[cachedGlyph.bufferSize];
+			cachedGlyph.padding.bottom--;
+			memset( cachedGlyph.pBuffer, 0, cachedGlyph.bufferSize );
+		}
+		else
+		{
+			// Copy bitmap
+			cachedGlyph.bufferSize = cachedGlyph.rows*cachedGlyph.pitch;
+			cachedGlyph.pBuffer = new unsigned char[cachedGlyph.bufferSize];
+			memcpy( cachedGlyph.pBuffer, m_cacheFace->glyph->bitmap.buffer, cachedGlyph.bufferSize );
+		}
 
 		// Convert bitmap to distance field
 		pTempBuffer = make_distance_mapb( cachedGlyph.pBuffer, cachedGlyph.width, cachedGlyph.rows );
@@ -147,8 +156,6 @@ bool CFont::CacheCharacters( const wchar_t *pCharacters, size_t characterCount )
 		m_cachedArea += cachedGlyph.bufferSize;
 
 		m_cachedGlyphs.push_back( cachedGlyph );
-
-		FT_Bitmap_Done( CGame::getInstance().getFreeType(), &convertedBitmap );
 	}
 
 	return true;
@@ -199,10 +206,10 @@ bool CFont::GenerateMapFromCache()
 
 			// Store the relevant glyph data
 			GlyphData glyphData;
-			glyphData.width = width;
-			glyphData.height = height;
-			glyphData.uv_start = glm::vec2( (float)offsetX / (float)mapDimension, (float)offsetY / (float)mapDimension );
-			glyphData.uv_end = glm::vec2(  (float)width / (float)mapDimension, (float)height / (float)mapDimension );
+			glyphData.width = (*it)->width;
+			glyphData.height = (*it)->height;
+			glyphData.uv_start = glm::vec2( (float)(*it)->x / (float)mapDimension, (float)(*it)->y / (float)mapDimension );
+			glyphData.uv_end = glm::vec2(  (float)(*it)->width / (float)mapDimension, (float)(*it)->height / (float)mapDimension );
 			glyphData.metrics = (*it)->glyph.metrics;
 			m_glyphs.insert( std::pair<wchar_t, GlyphData>( (*it)->glyph.character, glyphData ) );
 		}
@@ -224,10 +231,6 @@ bool CFont::GenerateMapFromCache()
 }
 void CFont::ClearCache()
 {
-	if( m_cacheFace ) {
-		FT_Done_Face( m_cacheFace );
-		m_cacheFace = 0;
-	}
 	// Clean up bin nodes
 	for( auto it = m_glyphBinNodes.begin(); it != m_glyphBinNodes.end(); it++ ) {
 		delete (*it);
@@ -269,7 +272,7 @@ bool CFont::binPackCache( unsigned int mapDimension )
 GlyphBinNode* CFont::insertIntoBin( GlyphBinNode *pNode, CachedGlyph cachedGlyph )
 {
 	int newWidth, newHeight;
-	int boxWidth, boxHeight;
+	unsigned int boxWidth, boxHeight;
 
 	// Check if this node is internal (has children)
 	if( pNode->pLeft || pNode->pRight )
@@ -353,4 +356,30 @@ GlyphData* CFont::getGlyph( wchar_t character )
 		PrintError( L"Character %c not found in font name %s\n", character, m_fontFileName.c_str() );
 		return 0;
 	}
+}
+int CFont::getPixelKerning( wchar_t leftGlyph, wchar_t rightGlyph )
+{
+	FT_UInt leftGlyphIndex, rightGlyphIndex;
+	FT_Error ftError;
+	FT_Vector kerningVector;
+
+	if( !m_cacheFace )
+		return 0;
+	// Get the glyph index
+	leftGlyphIndex = FT_Get_Char_Index( m_cacheFace, leftGlyph );
+	if( !leftGlyphIndex ) {
+		PrintWarn( L"Missing character \'%c\' in font \'%s\'\n", leftGlyph, m_fontFileName.c_str() );
+		return 0;
+	}
+	rightGlyphIndex = FT_Get_Char_Index( m_cacheFace, rightGlyph );
+	if( !rightGlyphIndex ) {
+		PrintWarn( L"Missing character \'%c\' in font \'%s\'\n", rightGlyph, m_fontFileName.c_str() );
+		return 0;
+	}
+	ftError = FT_Get_Kerning( m_cacheFace, leftGlyphIndex, rightGlyphIndex, FT_KERNING_DEFAULT, &kerningVector );
+	if( ftError != 0 ) {
+		PrintWarn( L"Failed to extract kerning in font \'%s\' (code: %d, '%hs')\n", m_fontFileName.c_str(), ftError, GetFreetypeError( ftError ) );
+		return 0;
+	}
+	return (kerningVector.x / FT_HRES);
 }

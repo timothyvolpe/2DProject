@@ -2,7 +2,7 @@
 
 #include <map>
 
-#define DEFAULT_CHARACTERS L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789,<.>/?;:\'\"[{]}\\|!@#$%^&*()-_=+`~"
+#define DEFAULT_CHARACTERS L" ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789,<.>/?;:\'\"[{]}\\|!@#$%^&*()-_=+`~"
 #define DEFAULT_CHARACTERS_COUNT 93
 #define REPLACEMENT_CHAR 0xFFFD
 
@@ -13,7 +13,8 @@ struct GlyphMetrics
 	int horizAdvance;
 	int vertAdvance;
 
-	int descender;
+	int descent;
+	int ascent;
 };
 struct GlyphPadding
 {
@@ -77,6 +78,7 @@ public:
 	void destroy();
 
 	GlyphData* getGlyph( wchar_t character );
+	int getPixelKerning( wchar_t leftGlyph, wchar_t rightGlyph );
 
 	CTexture2D* getFontMap();
 };
