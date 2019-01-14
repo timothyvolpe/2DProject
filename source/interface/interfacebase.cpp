@@ -41,7 +41,7 @@ glm::ivec2 CInterfaceBase::getRelativePosition() const {
 glm::ivec2 CInterfaceBase::getAbsolutePosition() const
 {
 	if( m_pParent ) {
-		return m_pParent->getAbsolutePosition() - m_position;
+		return m_pParent->getAbsolutePosition() + m_position;
 	}
 	else
 		return m_position;

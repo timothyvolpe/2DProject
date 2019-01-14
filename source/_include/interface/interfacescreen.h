@@ -10,4 +10,6 @@ public:
 
 	bool onCreate();
 	void onDestroy();
+
+	void onDraw();
 };

@@ -16,31 +16,20 @@ void CInterfacePanel::onDestroy() {
 
 bool CInterfacePanel::onActivate()
 {
-	CGame::getInstance().getInterfaceManager()->addQuad( this->getAbsolutePosition(), this->getSize(), 0, glm::vec2( 0.0f, 0.0f ), glm::vec2( 1.0f, 1.0f ) );
+	
 	return true;
 }
 
 void CInterfacePanel::onDraw()
 {
-	glm::ivec2 interfacePos, interfaceSize;
+	InterfaceQuad quad;
 
-	interfaceSize = this->getSize();
-	interfacePos = glm::ivec2( this->getAbsolutePosition().x, this->getAbsolutePosition().y );
+	quad.absPos = this->getAbsolutePosition();
+	quad.absSize = this->getSize();
+	quad.textureId = 0;
+	quad.interfaceLayer = 0;
+	quad.tex_start = glm::vec2( 0.0f, 0.0f );
+	quad.tex_stop = glm::vec2( 1.0f, 1.0f );
 
-	/*glBegin( GL_TRIANGLES );
-	{
-		glColor3f( 0.0f, 0.0f, 1.0f );
-		glVertex3i( interfacePos.x+interfaceSize.x, interfacePos.y, 200 );
-		glColor3f( 0.0f, 0.0f, 1.0f );
-		glVertex3i( interfacePos.x, interfacePos.y, 200 );
-		glColor3f( 0.0f, 0.0f, 1.0f );
-		glVertex3i( interfacePos.x, interfacePos.y+interfaceSize.y, 200 );
-		glColor3f( 0.0f, 0.0f, 1.0f );
-		glVertex3i( interfacePos.x, interfacePos.y+interfaceSize.y, 200 );
-		glColor3f( 0.0f, 0.0f, 1.0f );
-		glVertex3i( interfacePos.x+interfaceSize.x, interfacePos.y+interfaceSize.y, 200 );
-		glColor3f( 0.0f, 0.0f, 1.0f );
-		glVertex3i( interfacePos.x+interfaceSize.x, interfacePos.y, 200 );
-	}
-	glEnd();*/
+	CGame::getInstance().getInterfaceManager()->drawQuad( quad );
 }

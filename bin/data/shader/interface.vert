@@ -1,19 +1,25 @@
 #version 150 
 
 in ivec2 in_pos;
-in vec2 in_tex;
-in uint textureId;
-out vec4 qColor;
+in ivec2 in_size;
+in vec4 in_tex;
+in int in_textureId;
+in vec3 in_color;
 
-uniform mat4 MVPMatrix;
+out vec4 qTexCoords;
+out vec2 qSize;
+out int qTextureId;
+out vec3 qColor;
+
 uniform float layerSize = 0.1f;
+uniform int interfaceLayer = 200;
 
 void main()
 {
 	// 200 is interface layer
-	gl_Position = MVPMatrix * vec4( in_pos.x, in_pos.y, -(255.0f - 200)*layerSize, 1.0f );
-	if( textureId == 0 )
-		qColor = vec4( 1.0f, 1.0f, 0.0f, 1.0f );
-	else if( textureId == 1 )
-		qColor = vec4( 1.0f, 0.0f, 0.0f, 1.0f );
+	gl_Position = vec4( in_pos.x, in_pos.y, -(255.0f - interfaceLayer)*layerSize, 1.0f );
+	qSize = in_size;
+	qTexCoords = in_tex;
+	qTextureId = in_textureId;
+	qColor = in_color;
 }

@@ -5,6 +5,13 @@
 #include FT_FREETYPE_H
 #include <boost\timer\timer.hpp>
 
+// FreeType Stuff
+
+#define FT_HRES 64
+#define FT_DPI 72
+
+const char* GetFreetypeError( FT_Error err );
+
 class CConsole;
 class CGameConfig;
 class CGameWindow;

@@ -8,6 +8,18 @@
 
 class CTexture2D;
 
+struct GlyphMetrics
+{
+	int horizAdvance;
+	int vertAdvance;
+
+	int descender;
+};
+struct GlyphPadding
+{
+	int left, top, right, bottom;
+};
+
 struct CachedGlyph
 {
 	wchar_t character;
@@ -15,9 +27,10 @@ struct CachedGlyph
 	unsigned int bufferSize;
 	unsigned int width;
 	unsigned int rows;
+	unsigned int pitch;
 
-	int advance;
-	int descender;
+	GlyphMetrics metrics;
+	GlyphPadding padding;
 
 	bool operator<( const CachedGlyph &rhs ) const;
 };
@@ -26,14 +39,15 @@ struct GlyphBinNode
 	GlyphBinNode *pLeft, *pRight;
 	unsigned int x, y;
 	unsigned int width, height;
+
 	CachedGlyph glyph;
 };
 struct GlyphData
 {
 	unsigned int width, height;
 	glm::vec2 uv_start, uv_end;
-	int advance;
-	int descender;
+
+	GlyphMetrics metrics;
 };
 
 class CFont
@@ -61,6 +75,8 @@ public:
 
 	bool initialize( bool systemFont, std::wstring const& fontFile );
 	void destroy();
+
+	GlyphData* getGlyph( wchar_t character );
 
 	CTexture2D* getFontMap();
 };

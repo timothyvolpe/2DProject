@@ -52,6 +52,7 @@ bool CGraphics::initialize()
 	// GL attributes
 	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
 	SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 24 );
+	SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, 8 );
 	SDL_GL_SetAttribute( SDL_GL_RED_SIZE, 8 );
 	SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, 8 );
 	SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, 8 );
@@ -133,13 +134,14 @@ void CGraphics::setupGraphics()
 	glClearColor( 0.0f, 0.0f, 0.0f, 1.0f );
 	glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 
-	//glEnable( GL_TEXTURE_2D );
 	glEnable( GL_MULTISAMPLE );
 	glEnable( GL_CULL_FACE );
+
 	glEnable( GL_DEPTH_TEST );
 	glDepthFunc( GL_LEQUAL );
-	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+
 	glEnable( GL_BLEND );
+	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 }
 
 void CGraphics::update()

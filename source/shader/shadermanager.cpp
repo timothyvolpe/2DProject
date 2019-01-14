@@ -114,13 +114,18 @@ bool CShaderManager::loadPrograms()
 	glUniform1i( this->getShaderProgram( L"environment" )->getUniform( "tex2dsampler" ), 0 );
 	// Interface
 	uniforms.push_back( "MVPMatrix" );
+	uniforms.push_back( "tex2dsampler" );
 	attribLocations.push_back( std::pair<int, std::string>( 0, "in_pos" ) );
-	attribLocations.push_back( std::pair<int, std::string>( 1, "in_tex" ) );
-	attribLocations.push_back( std::pair<int, std::string>( 2, "textureId" ) );
+	attribLocations.push_back( std::pair<int, std::string>( 1, "in_size" ) );
+	attribLocations.push_back( std::pair<int, std::string>( 2, "in_tex" ) );
+	attribLocations.push_back( std::pair<int, std::string>( 3, "in_textureId" ) );
+	attribLocations.push_back( std::pair<int, std::string>( 4, "in_color" ) );
 	if( !this->createAndLoadProgram( L"interface", true, true, true, uniforms, attribLocations ) )
 		return false;
 	uniforms.clear();
 	attribLocations.clear();
+	this->bind( this->getShaderProgram( L"interface" ) );
+	glUniform1i( this->getShaderProgram( L"interface" )->getUniform( "tex2dsampler" ), 0 );
 	// Sprite
 	uniforms.push_back( "MVPMatrix" );
 	uniforms.push_back( "tex2dsampler" );
@@ -128,8 +133,7 @@ bool CShaderManager::loadPrograms()
 	attribLocations.push_back( std::pair<int, std::string>( 1, "in_rotation" ) );
 	attribLocations.push_back( std::pair<int, std::string>( 2, "in_size" ) );
 	attribLocations.push_back( std::pair<int, std::string>( 3, "in_texcoords" ) );
-	attribLocations.push_back( std::pair<int, std::string>( 4, "in_layer" ) );
-	//attribLocations.push_back( std::pair<int, std::string>( 5, "in_tileinfo" ) );
+	attribLocations.push_back( std::pair<int, std::string>( 4, "in_tileinfo" ) );
 	if( !this->createAndLoadProgram( L"sprite", true, true, true, uniforms, attribLocations ) )
 		return false;
 	uniforms.clear();

@@ -1,7 +1,9 @@
 #include "base.h"
 #include "interface\font.h"
+#include "interface\distance-field.h"
 #include "game.h"
 #include "texture.h"
+#include <ftbitmap.h>
 
 bool CachedGlyph::operator<( const CachedGlyph &rhs ) const { 
 	return width*rows > rhs.width*rhs.rows; 
@@ -43,8 +45,14 @@ bool CFont::initialize( bool systemFont, std::wstring const& fontFile )
 
 	// Load the font from freetype
 	ftError = FT_New_Face( ftLib, fontPath.string().c_str(), 0, &m_cacheFace );
-	if( ftError != 0 ) {
-		PrintError( L"FreeType failed to load font \'%s\' (code: %d)\n", m_fontFileName.c_str(), ftError );
+	if( ftError ) {
+		PrintError( L"FreeType failed to load font \'%s\' (code: %d, '%hs')\n", m_fontFileName.c_str(), ftError, GetFreetypeError( ftError ) );
+		return false;
+	}
+	// Select the unicode charmap
+	ftError = FT_Select_Charmap( m_cacheFace, FT_ENCODING_UNICODE );
+	if( ftError ) {
+		PrintError( L"FreeType couldn't find unicode charmap in font \'%s\' (code: %d, '%hs')\n", m_fontFileName.c_str(), ftError, GetFreetypeError( ftError ) );
 		return false;
 	}
 	// Check to see if the font is compatible
@@ -52,10 +60,10 @@ bool CFont::initialize( bool systemFont, std::wstring const& fontFile )
 		PrintError( L" Font \'%s\' is not supported\n", m_fontFileName.c_str() );
 		return false;
 	}
-	// Set the font size to 16 for the distance field
-	ftError = FT_Set_Char_Size( m_cacheFace, 0, 22*64, 0, 0 );
-	if( ftError != 0 ) {
-		PrintError( L"Font \'%s\' does not contain the correct size for distance field! (code: %d)\n", m_fontFileName.c_str(), ftError );
+	// Set the font size to 24 for the distance field
+	ftError = FT_Set_Char_Size( m_cacheFace, 0, 24*FT_HRES, 0, FT_DPI );
+	if( ftError ) {
+		PrintError( L"Font \'%s\' does not contain the correct size for distance field! (code: %d, '%hs')\n", m_fontFileName.c_str(), ftError, GetFreetypeError( ftError ) );
 		return true;
 	}
 
@@ -86,7 +94,9 @@ bool CFont::CacheCharacters( const wchar_t *pCharacters, size_t characterCount )
 	{
 		FT_UInt glyphIndex;
 		FT_Error ftError;
+		FT_Bitmap convertedBitmap;
 		CachedGlyph cachedGlyph;
+		unsigned char *pTempBuffer;
 
 		// Get the glyph index
 		glyphIndex = FT_Get_Char_Index( m_cacheFace, pCharacters[i] );
@@ -98,7 +108,7 @@ bool CFont::CacheCharacters( const wchar_t *pCharacters, size_t characterCount )
 		// Attempt to load the glyph
 		ftError = FT_Load_Glyph( m_cacheFace, glyphIndex, FT_LOAD_RENDER );
 		if( ftError != 0 ) {
-			PrintWarn( L"Failed to load glyph (%c) in font \'%s\'\n", pCharacters[i], m_fontFileName.c_str() );
+			PrintWarn( L"Failed to load glyph (%c) in font \'%s\' (code: %d, '%hs')\n", pCharacters[i], m_fontFileName.c_str(), ftError, GetFreetypeError( ftError ) );
 			continue;
 		}
 		if( m_cacheFace->glyph->bitmap.pixel_mode != FT_PIXEL_MODE_GRAY ) {
@@ -106,19 +116,39 @@ bool CFont::CacheCharacters( const wchar_t *pCharacters, size_t characterCount )
 			continue;
 		}
 
+		
+		// Convert the bitmap
+		FT_Bitmap_New( &convertedBitmap );
+		ftError = FT_Bitmap_Convert( CGame::getInstance().getFreeType(), &m_cacheFace->glyph->bitmap, &convertedBitmap, 1 );
+		if( ftError != 0 ) {
+			PrintWarn( L"Failed to convert glyph (%c) in font \'%s\' (code: %d, '%hs')\n", pCharacters[i], m_fontFileName.c_str(), ftError, GetFreetypeError( ftError ) );
+			FT_Bitmap_Done( CGame::getInstance().getFreeType(), &convertedBitmap );
+			continue;
+		}
+
 		// Store the glyphs data
 		cachedGlyph.character = pCharacters[i];
-		cachedGlyph.width = m_cacheFace->glyph->bitmap.width;
-		cachedGlyph.rows = m_cacheFace->glyph->bitmap.rows;
-		cachedGlyph.advance = m_cacheFace->glyph->metrics.horiAdvance / 64;
-		cachedGlyph.descender = (m_cacheFace->glyph->metrics.height - m_cacheFace->glyph->metrics.horiBearingY) / 64;
-		cachedGlyph.bufferSize = cachedGlyph.rows*m_cacheFace->glyph->bitmap.pitch;
+		cachedGlyph.width = convertedBitmap.width;
+		cachedGlyph.rows = convertedBitmap.rows;
+		cachedGlyph.pitch = convertedBitmap.pitch;
+		cachedGlyph.bufferSize = cachedGlyph.rows*cachedGlyph.pitch;
 		cachedGlyph.pBuffer = new unsigned char[cachedGlyph.bufferSize];
-		memcpy( cachedGlyph.pBuffer, m_cacheFace->glyph->bitmap.buffer, cachedGlyph.bufferSize );
+		cachedGlyph.metrics.horizAdvance = m_cacheFace->glyph->metrics.horiAdvance / FT_HRES;
+		cachedGlyph.metrics.vertAdvance = m_cacheFace->glyph->metrics.vertAdvance / FT_HRES;
+		cachedGlyph.metrics.descender = (m_cacheFace->glyph->metrics.height - m_cacheFace->glyph->metrics.horiBearingY) / FT_HRES;
+		cachedGlyph.padding = { 1, 1, 1, 1 };
+		memcpy( cachedGlyph.pBuffer, convertedBitmap.buffer, cachedGlyph.bufferSize );
+
+		// Convert bitmap to distance field
+		pTempBuffer = make_distance_mapb( cachedGlyph.pBuffer, cachedGlyph.width, cachedGlyph.rows );
+		SafeDeleteArray( cachedGlyph.pBuffer );
+		cachedGlyph.pBuffer = pTempBuffer;
 
 		m_cachedArea += cachedGlyph.bufferSize;
 
 		m_cachedGlyphs.push_back( cachedGlyph );
+
+		FT_Bitmap_Done( CGame::getInstance().getFreeType(), &convertedBitmap );
 	}
 
 	return true;
@@ -149,16 +179,17 @@ bool CFont::GenerateMapFromCache()
 	this->binPackCache( mapDimension );
 
 	// Render the map and populate glyph map
-	unsigned int width, height;
+	unsigned int width, height, pitch;
 	unsigned int offsetX, offsetY;
 	for( auto it = m_glyphBinNodes.begin(); it != m_glyphBinNodes.end(); it++ )
 	{
 		if( (*it)->pLeft || (*it)->pRight )
 		{
-			width = (*it)->width;
-			height = (*it)->height;
-			offsetX = (*it)->x;
-			offsetY = (*it)->y;
+			width = (*it)->width - (*it)->glyph.padding.left - (*it)->glyph.padding.right;
+			height = (*it)->height - (*it)->glyph.padding.top - (*it)->glyph.padding.bottom;
+			pitch = (*it)->glyph.pitch;
+			offsetX = (*it)->x + (*it)->glyph.padding.left;
+			offsetY = (*it)->y + (*it)->glyph.padding.top;
 			// Insert a glyph into the buffer
 			for( unsigned int x = offsetX; x < offsetX+width; x++ ) {
 				for( unsigned int y = offsetY; y < offsetY+height; y++ ) {
@@ -168,18 +199,17 @@ bool CFont::GenerateMapFromCache()
 
 			// Store the relevant glyph data
 			GlyphData glyphData;
-			glyphData.width = (*it)->width;
-			glyphData.height = (*it)->height;
-			glyphData.uv_start = glm::vec2( (float)(*it)->x / (float)(*it)->width, (float)(*it)->y / (float)(*it)->height );
-			glyphData.uv_end = glm::vec2( (float)(*it)->width / (float)width + glyphData.uv_start.x, (float)(*it)->height / (float)height + glyphData.uv_start.y );
-			glyphData.advance = (*it)->glyph.advance;
-			glyphData.descender = (*it)->glyph.descender;
+			glyphData.width = width;
+			glyphData.height = height;
+			glyphData.uv_start = glm::vec2( (float)offsetX / (float)mapDimension, (float)offsetY / (float)mapDimension );
+			glyphData.uv_end = glm::vec2(  (float)width / (float)mapDimension, (float)height / (float)mapDimension );
+			glyphData.metrics = (*it)->glyph.metrics;
 			m_glyphs.insert( std::pair<wchar_t, GlyphData>( (*it)->glyph.character, glyphData ) );
 		}
 	}
 
-	textureDesc.magFilter = GL_NEAREST;
-	textureDesc.minFilter = GL_NEAREST;
+	textureDesc.magFilter = GL_LINEAR;
+	textureDesc.minFilter = GL_LINEAR;
 	textureDesc.wrapS = GL_CLAMP_TO_EDGE;
 	textureDesc.wrapT = GL_CLAMP_TO_EDGE;
 	textureDesc.useAlpha = false;
@@ -239,6 +269,7 @@ bool CFont::binPackCache( unsigned int mapDimension )
 GlyphBinNode* CFont::insertIntoBin( GlyphBinNode *pNode, CachedGlyph cachedGlyph )
 {
 	int newWidth, newHeight;
+	int boxWidth, boxHeight;
 
 	// Check if this node is internal (has children)
 	if( pNode->pLeft || pNode->pRight )
@@ -260,14 +291,17 @@ GlyphBinNode* CFont::insertIntoBin( GlyphBinNode *pNode, CachedGlyph cachedGlyph
 		return NULL;
 	}
 
+	boxWidth = cachedGlyph.width + cachedGlyph.padding.left + cachedGlyph.padding.right;
+	boxHeight = cachedGlyph.rows + cachedGlyph.padding.top + cachedGlyph.padding.bottom;
+
 	// If it has no children, check if the glyph fits here
-	if( cachedGlyph.width > pNode->width || cachedGlyph.rows > pNode->height )
+	if( boxWidth > pNode->width || boxHeight > pNode->height )
 		return NULL;
 
 	// Split the node along the short axis and 
 	// insert the glyph
-	newWidth = pNode->width - cachedGlyph.width;
-	newHeight = pNode->height - cachedGlyph.rows;
+	newWidth = pNode->width - boxWidth;
+	newHeight = pNode->height - boxHeight;
 	// Create new children
 	pNode->pLeft = new GlyphBinNode();
 	pNode->pRight = new GlyphBinNode();
@@ -275,32 +309,32 @@ GlyphBinNode* CFont::insertIntoBin( GlyphBinNode *pNode, CachedGlyph cachedGlyph
 	m_glyphBinNodes.push_back( pNode->pRight );
 	if( newWidth <= newHeight )
 	{
-		pNode->pLeft->x = pNode->x + cachedGlyph.width;
+		pNode->pLeft->x = pNode->x + boxWidth;
 		pNode->pLeft->y = pNode->y;
 		pNode->pLeft->width = newWidth;
-		pNode->pLeft->height = cachedGlyph.rows;
+		pNode->pLeft->height = boxHeight;
 
 		pNode->pRight->x = pNode->x;
-		pNode->pRight->y = pNode->y + cachedGlyph.rows;
+		pNode->pRight->y = pNode->y + boxHeight;
 		pNode->pRight->width = pNode->width;
 		pNode->pRight->height = newHeight;
 	}
 	else
 	{
 		pNode->pLeft->x = pNode->x;
-		pNode->pLeft->y = pNode->y + cachedGlyph.rows;
-		pNode->pLeft->width = cachedGlyph.width;
+		pNode->pLeft->y = pNode->y + boxHeight;
+		pNode->pLeft->width = boxWidth;
 		pNode->pLeft->height = newHeight;
 
-		pNode->pRight->x = pNode->x + cachedGlyph.width;
+		pNode->pRight->x = pNode->x + boxWidth;
 		pNode->pRight->y = pNode->y;
 		pNode->pRight->width = newWidth;
 		pNode->pRight->height = pNode->height;
 	}
 
 	// Shrink the node
-	pNode->width = cachedGlyph.width;
-	pNode->height = cachedGlyph.rows;
+	pNode->width = boxWidth;
+	pNode->height = boxHeight;
 	pNode->glyph = cachedGlyph;
 
 	return pNode;
@@ -308,4 +342,15 @@ GlyphBinNode* CFont::insertIntoBin( GlyphBinNode *pNode, CachedGlyph cachedGlyph
 
 CTexture2D* CFont::getFontMap() {
 	return m_pFontMap;
+}
+
+GlyphData* CFont::getGlyph( wchar_t character )
+{
+	auto it = m_glyphs.find( character );
+	if( it != m_glyphs.end() )
+		return &(*it).second;
+	else {
+		PrintError( L"Character %c not found in font name %s\n", character, m_fontFileName.c_str() );
+		return 0;
+	}
 }

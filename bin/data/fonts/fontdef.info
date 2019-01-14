@@ -2,7 +2,7 @@ windows
 {
 	system_fonts
 	{
-		DEFAULT_FONT "cour.ttf" ; Courier New Regular
+		DEFAULT_FONT "arial.ttf" ; Courier New Regular
 	}
 	game_fonts
 	{

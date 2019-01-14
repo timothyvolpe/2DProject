@@ -2,7 +2,9 @@
 
 #define BATCH_CHUNK_SIZE 4096
 
-#pragma pack(push, 16)
+// POS DENOTES THE CENTER OF THE SPRITE
+
+#pragma pack(push, 4)
 typedef struct {
 	glm::vec2 pos;
 	float rot;

@@ -10,6 +10,7 @@
 
 #include "interface\interfacescreen.h"
 #include "interface\interfacepanel.h"
+#include "interface\interfacelabel.h"
 
 #include <algorithm>
 #include <boost\property_tree\ptree.hpp>
@@ -19,12 +20,9 @@ CInterfaceManager::CInterfaceManager()
 {
 	m_vaoId = GL_INVALID_INDEX;
 	m_vboId = GL_INVALID_INDEX;
-	m_iboId = GL_INVALID_INDEX;
 
 	m_vertexCount = 0;
 	m_indexCount = 0;
-
-	m_quadMaxBufferSize = 16384;
 }
 CInterfaceManager::~CInterfaceManager() {
 }
@@ -35,11 +33,35 @@ bool CInterfaceManager::initialize()
 	if( !this->loadFonts() )
 		return false;
 
-	this->allocateQuadBuffer();
+	StartGLDebug( "CreateInterfaceBuffers" );
+
+	// Create it if necessary
+	if( m_vaoId == GL_INVALID_INDEX ) {
+		glGenVertexArrays( 1, &m_vaoId );
+		glGenBuffers( 1, &m_vboId );
+	}
+	glBindVertexArray( m_vaoId );
+	// Vertex 
+	glBindBuffer( GL_ARRAY_BUFFER, m_vboId );
+	// Reallocate the new buffer of the proper size
+	glVertexAttribIPointer( 0, 2, GL_UNSIGNED_SHORT, sizeof( InterfaceVertex ), (GLvoid*)offsetof( InterfaceVertex, pos ) );
+	glVertexAttribIPointer( 1, 2, GL_UNSIGNED_SHORT, sizeof( InterfaceVertex ), (GLvoid*)offsetof( InterfaceVertex, size ) );
+	glVertexAttribPointer( 2, 4, GL_UNSIGNED_SHORT, GL_TRUE, sizeof( InterfaceVertex ), (GLvoid*)offsetof( InterfaceVertex, texcoords ) );
+	glVertexAttribIPointer( 3, 1, GL_BYTE, sizeof( InterfaceVertex ), (GLvoid*)offsetof( InterfaceVertex, textureId ) );
+	glVertexAttribPointer( 4, 3, GL_UNSIGNED_BYTE, GL_TRUE, sizeof( InterfaceVertex ), (GLvoid*)offsetof( InterfaceVertex, color ) );
+	glEnableVertexAttribArray( 0 );
+	glEnableVertexAttribArray( 1 );
+	glEnableVertexAttribArray( 2 );
+	glEnableVertexAttribArray( 3 );
+	glEnableVertexAttribArray( 4 );
+	glBufferData( GL_ARRAY_BUFFER, MAX_QUADS_PER_BUFFER*sizeof( InterfaceVertex ), 0, GL_DYNAMIC_DRAW );
+
+	EndGLDebug();
 
 	// Create a test screen
 	CInterfaceScreen *pTestScreen;
 	CInterfacePanel *pTestPanel;
+	CInterfaceLabel* pTestLabel;
 
 	pTestScreen = new CInterfaceScreen();
 	pTestScreen->initialize( L"DebugScreen" );
@@ -49,16 +71,24 @@ bool CInterfaceManager::initialize()
 
 	pTestPanel = new CInterfacePanel();
 	pTestPanel->initialize( L"DebugPanel" );
-	pTestPanel->setSize( glm::ivec2( 20, 40 ) );
-	pTestPanel->setPosition( glm::ivec2( 0, 0 ) );
+	pTestPanel->setSize( glm::ivec2( 50, 50 ) );
+	pTestPanel->setPosition( glm::ivec2( 10, 0 ) );
 	pTestScreen->addChild( pTestPanel );
 	pTestPanel->activate();
+
+	pTestLabel = new CInterfaceLabel();
+	pTestLabel->initialize( L"DebugLabel" );
+	pTestLabel->setSize( glm::ivec2( 50, 15 ) );
+	pTestLabel->setPosition( glm::ivec2( 70, 100 ) );
+	pTestScreen->addChild( pTestLabel );
+	pTestLabel->activate();
 
 	this->addScreen( pTestScreen );
 
 	return true;
 }
-void CInterfaceManager::destroy() {
+void CInterfaceManager::destroy()
+{
 	// Delete the fonts
 	for( auto it = m_fontMap.begin(); it != m_fontMap.end(); it++ ) {
 		DestroyDelete( (*it).second );
@@ -66,10 +96,9 @@ void CInterfaceManager::destroy() {
 	// Delete the quads
 	if( m_vaoId != GL_INVALID_INDEX ) {
 		glDeleteBuffers( 1, &m_vboId );
-		glDeleteBuffers( 1, &m_iboId );
 		glDeleteVertexArrays( 1, &m_vaoId );
 	}
-	m_vboId = m_iboId = m_vaoId = GL_INVALID_INDEX;
+	m_vboId = m_vaoId = GL_INVALID_INDEX;
 	m_fontMap.clear();
 }
 
@@ -184,176 +213,95 @@ void CInterfaceManager::drawChildren( glm::mat4 interfaceOrthoMat, std::vector<C
 }
 void CInterfaceManager::draw( glm::mat4 interfaceOrthoMat )
 {
-	glm::mat4 mvpMatrix, modelMatrix;
+	glm::mat4 mvpMatrix;
 	CShaderProgram *pInterfaceProgram = CGame::getInstance().getGraphics()->getShaderManager()->getShaderProgram( L"interface" );
 	std::vector<CInterfaceBase*> children;
+	InterfaceVertex *pVerticesPtr;
+	size_t quadCount;
 
-	// Do we need to flush the quads?
-	if( m_interfaceQuads.size() > 0 )
-		this->flushQuads();
-
-	// Bind interface program
-	CGame::getInstance().getGraphics()->getShaderManager()->bind( pInterfaceProgram );
-
-	StartGLDebug( "DrawInterface" );
-	
-	// Setup matrices
-	mvpMatrix = interfaceOrthoMat;
-
-	glUniformMatrix4fv( pInterfaceProgram->getUniform( "MVPMatrix" ), 1, GL_FALSE, &mvpMatrix[0][0] );
-
-	// Bind textures
-	this->getFont( L"DEFAULT_FONT" )->getFontMap()->bind( 0 );
-
-	glBindVertexArray( m_vaoId );
-	glDrawArrays( GL_LINES_ADJACENCY, 0, m_vertexCount );
-	//glDrawElements( GL_POINTS, m_indexCount, GL_UNSIGNED_INT, 0 );
-
-
-	//glDrawArrays( GL_TRIANGLES, 0, 11 );
-
-	// Render the active screens
- 	for( auto it = m_activeScreens.begin(); it != m_activeScreens.end(); it++ )
+	// Draw the quads to the buffer
+	for( auto it = m_activeScreens.begin(); it != m_activeScreens.end(); it++ )
 	{
-		glm::ivec2 interfacePos, interfaceSize;
-
-		interfaceSize = (*it)->getSize();
-		interfacePos = (*it)->getAbsolutePosition();
-
 		(*it)->onDraw();
-
-		/*glBegin( GL_TRIANGLES );
-		{
-			glColor3f( 1.0f, 0.0f, 0.0f );
-			glVertex3i( interfacePos.x+interfaceSize.x, interfacePos.y, 200 );
-			glColor3f( 1.0f, 0.0f, 0.0f );
-			glVertex3i( interfacePos.x, interfacePos.y, 200 );
-			glColor3f( 1.0f, 0.0f, 0.0f );
-			glVertex3i( interfacePos.x, interfacePos.y+interfaceSize.y, 200 );
-			glColor3f( 1.0f, 0.0f, 0.0f );
-			glVertex3i( interfacePos.x, interfacePos.y+interfaceSize.y, 200 );
-			glColor3f( 1.0f, 0.0f, 0.0f );
-			glVertex3i( interfacePos.x+interfaceSize.x, interfacePos.y+interfaceSize.y, 200 );
-			glColor3f( 1.0f, 0.0f, 0.0f );
-			glVertex3i( interfacePos.x+interfaceSize.x, interfacePos.y, 200 );
-		}
-		glEnd();*/
 
 		// Draw the screens children
 		children = (*it)->getChildren();
 		this->drawChildren( interfaceOrthoMat, children );
 	}
 
-	EndGLDebug();
-}
 
-void CInterfaceManager::allocateQuadBuffer()
-{
-	unsigned int *pIndices;
-	unsigned int quadCount;
+	StartGLDebug( "FlushInterfaceArray" );
 
-	StartGLDebug( "AllocateInterfaceQuadBuffer" );
-
-	// Create it if necessary
-	if( m_vaoId == GL_INVALID_INDEX ) {
-		glGenVertexArrays( 1, &m_vaoId );
-		glGenBuffers( 1, &m_vboId );
-		glGenBuffers( 1, &m_iboId );
-	}
 	glBindVertexArray( m_vaoId );
-	// Vertex 
 	glBindBuffer( GL_ARRAY_BUFFER, m_vboId );
-	// Reallocate the new buffer of the proper size
-	glVertexAttribIPointer( 0, 2, GL_UNSIGNED_SHORT, sizeof( InterfaceVertex ), (GLvoid*)offsetof( InterfaceVertex, posx ) );
-	glVertexAttribPointer( 1, 2, GL_UNSIGNED_SHORT, GL_TRUE, sizeof( InterfaceVertex ), (GLvoid*)offsetof( InterfaceVertex, texu ) );
-	glVertexAttribIPointer( 2, 1, GL_UNSIGNED_BYTE, sizeof( InterfaceVertex ), (GLvoid*)offsetof( InterfaceVertex, textureId ) );
-	glEnableVertexAttribArray( 0 );
-	glEnableVertexAttribArray( 1 );
-	glEnableVertexAttribArray( 2 );
-	glBufferData( GL_ARRAY_BUFFER, m_quadMaxBufferSize, 0, GL_DYNAMIC_DRAW );
-	// Index
-	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, m_iboId );
-	// Fill it with new quad indices
-	quadCount = (unsigned int)(m_quadMaxBufferSize / (sizeof( InterfaceVertex )*4));
-	pIndices = new unsigned int[quadCount*6];
-	unsigned int quadSequence[] = { 0,1,2,2,3,0 };
-	// Copy the quad index sequence
-	for( unsigned int i = 0; i < quadCount; i++ )
-		memcpy( pIndices + i*6, &quadSequence, sizeof( quadSequence ) );
-	// Move it into the buffer
-	glBufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof( unsigned int )*quadCount*6, pIndices, GL_STATIC_DRAW );
-	delete[] pIndices;
 
-	EndGLDebug();
-}
+	pVerticesPtr = (InterfaceVertex*)glMapBufferRange( GL_ARRAY_BUFFER, 0, MAX_QUADS_PER_BUFFER*sizeof( InterfaceVertex ), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT );
+	if( !pVerticesPtr ) {
+		PrintWarn( L"Draw error\n" );
+		EndGLDebug();
+		return;
+	}
 
-void CInterfaceManager::addQuad( glm::ivec2 absolutePosition, glm::ivec2 absoluteSize, char textureId, glm::vec2 tex_start, glm::vec2 tex_stop )
-{
-	InterfaceQuad quad;
-	quad.absPos = absolutePosition;
-	quad.absSize = absoluteSize;
-	quad.textureId = textureId;
-	quad.tex_start = tex_start;
-	quad.tex_stop = tex_stop;
-	m_interfaceQuads.push_back( quad );
-}
-void CInterfaceManager::clearQuads() {
-	m_interfaceQuads.clear();
-}
-void CInterfaceManager::flushQuads()
-{
-	InterfaceVertex *pVertices;
-	unsigned int currentVertex;
-	GLsizeiptr bufferSize;
+	GLushort maxShort = (GLushort)(-1);
 
-	// Create the new data
-	pVertices = new InterfaceVertex[m_interfaceQuads.size()*4];
-	currentVertex = 0; 
-	for( auto it = m_interfaceQuads.begin(); it != m_interfaceQuads.end(); it++ )
+	// Form the vertex buffer
+	for( size_t i = 0; i < m_interfaceQuads.size(); i++ )
 	{
-		InterfaceVertex v1, v2, v3, v4;
-		
-		v1.posx = (GLushort)(*it).absPos.x;
-		v1.posy = (GLushort)(*it).absPos.y;
-		v1.textureId = (*it).textureId;
-		//v1.layer = LAYER_INTERFACE;
-		pVertices[currentVertex++] = v1;
-		v2.posx = (GLushort)(*it).absPos.x+(*it).absSize.x;
-		v2.posy = (GLushort)(*it).absPos.y;
-		v2.textureId = (*it).textureId;
-		//v2.layer = LAYER_INTERFACE;
-		pVertices[currentVertex++] = v2;
-		v3.posx = (GLushort)(*it).absPos.x;
-		v3.posy = (GLushort)(*it).absPos.y+(*it).absSize.y;
-		v3.textureId = (*it).textureId;
-		//v3.layer = LAYER_INTERFACE;
-		pVertices[currentVertex++] = v3;
-		v4.posx = (GLushort)(*it).absPos.x+(*it).absSize.x;
-		v4.posy = (GLushort)(*it).absPos.y+(*it).absSize.y;
-		v4.textureId = (*it).textureId;
-		//v4.layer = LAYER_INTERFACE;
-		pVertices[currentVertex++] = v4;
+		pVerticesPtr[i].pos = glm::lowp_uvec2( m_interfaceQuads[i].absPos );
+		pVerticesPtr[i].size = glm::lowp_uvec2( m_interfaceQuads[i].absSize );
+		pVerticesPtr[i].texcoords = glm::lowp_uvec4( m_interfaceQuads[i].tex_start * (float)maxShort, m_interfaceQuads[i].tex_stop * (float)maxShort );
+		pVerticesPtr[i].textureId = m_interfaceQuads[i].textureId;
+		pVerticesPtr[i].color[0] = m_interfaceQuads[i].color.r;
+		pVerticesPtr[i].color[1] = m_interfaceQuads[i].color.g;
+		pVerticesPtr[i].color[2] = m_interfaceQuads[i].color.b;
 	}
-	m_vertexCount = currentVertex;
-	m_indexCount = m_interfaceQuads.size()*6;
+	quadCount = m_interfaceQuads.size();
+	m_interfaceQuads.clear();
 
-	// Push the new data
-	bufferSize = sizeof( InterfaceVertex )*m_vertexCount;
-	if( (unsigned int)bufferSize > m_quadMaxBufferSize ) {
-		PrintError( L"Too many interface quads! Some will not be rendered\n" );
-		bufferSize = m_quadMaxBufferSize;
-	}
-	StartGLDebug( "FlushInterfaceQuadBuffer" );
-	glBindVertexArray( m_vaoId );
-	// Invalidate old data
-	glInvalidateBufferSubData( m_vboId, 0, bufferSize );
-	// Send new data
-	glBufferSubData( GL_ARRAY_BUFFER, 0, bufferSize, pVertices );
+	pVerticesPtr = 0;
+	glUnmapBuffer( GL_ARRAY_BUFFER );
+
 	EndGLDebug();
 
-	delete[] pVertices;
+	StartGLDebug( "DrawInterfaceBuffer" );
 
-	this->clearQuads();
+	// Bind interface program
+	CGame::getInstance().getGraphics()->getShaderManager()->bind( pInterfaceProgram );
+
+	// Setup matrices
+	mvpMatrix = interfaceOrthoMat;
+	glUniformMatrix4fv( pInterfaceProgram->getUniform( "MVPMatrix" ), 1, GL_FALSE, &mvpMatrix[0][0] );
+
+	// Bind textures
+	this->getFont( L"DEFAULT_FONT" )->getFontMap()->bind( 0 );
+
+	//glEnable( GL_STENCIL_TEST );
+
+	/*glColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
+	glDepthMask( GL_FALSE );
+	glStencilFunc( GL_ALWAYS, 1, 0xFF );
+	glStencilOp( GL_KEEP, GL_KEEP, GL_REPLACE );
+	glStencilMask( 0xFF );
+	glClear( GL_STENCIL_BUFFER_BIT );
+
+	glDrawArrays( GL_POINTS, 0, quadCount );*/
+
+	/*glClear( GL_STENCIL_BUFFER_BIT );
+	glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
+	glDepthMask( GL_TRUE );
+	glStencilFunc( GL_NEVER, 1, 0xFF );
+	glStencilOp( GL_REPLACE, GL_KEEP, GL_KEEP );
+	glStencilMask( 0xFF );*/
+
+	glDrawArrays( GL_POINTS, 0, quadCount );
+
+	//glDisable( GL_STENCIL_TEST );
+
+	EndGLDebug();
+}
+
+void CInterfaceManager::drawQuad( InterfaceQuad interfaceQuad ) {
+	m_interfaceQuads.push_back( interfaceQuad );
 }
 
 CFont* CInterfaceManager::getFont( const wchar_t* fontName )

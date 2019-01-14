@@ -4,22 +4,30 @@
 
 #define GAME_FONT_FILE L"fontdef.info"
 
+#define MAX_QUADS_PER_BUFFER 8192
+
 class CFont;
 class CInterfaceBase;
 class CInterfaceScreen;
 
+// POS DENOTES THE TOP LEFT OF THE QUAD
+#pragma pack(push, 4)
+typedef struct {
+	glm::lowp_uvec2 pos;
+	glm::lowp_uvec2 size;
+	glm::lowp_uvec4 texcoords;
+	char textureId;
+	unsigned char color[3];
+} InterfaceVertex;
+#pragma pack(pop)
+
 struct InterfaceQuad {
 	glm::ivec2 absPos, absSize;
 	glm::vec2 tex_start, tex_stop;
+	glm::ivec3 color;
 	char textureId;
+	unsigned char interfaceLayer;
 };
-#pragma pack(push, 4)
-typedef struct {
-	GLushort posx, posy;
-	GLushort texu, texv;
-	char textureId;
-} InterfaceVertex;
-#pragma pack(pop)
 
 class CInterfaceManager
 {
@@ -31,18 +39,13 @@ private:
 
 	GLuint m_vaoId;
 	GLuint m_vboId;
-	GLuint m_iboId;
 
-	unsigned int m_quadMaxBufferSize;
 	unsigned int m_vertexCount, m_indexCount;
 
 	bool loadFonts();
 	bool loadFontFromFile( bool systemFont, std::wstring const& fontId, std::wstring const& fontFile);
 
 	void drawChildren( glm::mat4 interfaceOrthoMat, std::vector<CInterfaceBase*> children );
-
-	void allocateQuadBuffer();
-	void flushQuads();
 public:
 	CInterfaceManager();
 	~CInterfaceManager();
@@ -55,8 +58,7 @@ public:
 	bool addScreen( CInterfaceScreen *pScreen );
 	bool removeScreen( CInterfaceScreen *pScreen );
 
-	void addQuad( glm::ivec2 absolutePosition, glm::ivec2 absoluteSize, char textureId, glm::vec2 tex_start, glm::vec2 tex_stop );
-	void clearQuads();
+	void drawQuad( InterfaceQuad interfaceQuad );
 
 	CFont* getFont( const wchar_t* fontName );
 };
