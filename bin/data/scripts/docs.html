@@ -1,0 +1,41 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+    	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    	<title>2DGame Lua Docs</title>
+        
+        <style>
+			span.client {
+				background-color:#999;
+				color:#00FFFF;
+				font-weight:bold;
+				padding:2px;
+			}
+			span.server {
+				background-color:#999;
+				color:#FF00FF;
+				font-weight:bold;
+				padding:2px;
+			}
+		</style>
+    </head>
+    
+    <body>
+    	<h1>Default Lua Library Notes</h1>
+        <h3>Base</h3>
+        <ul>
+        	<li><strong>print</strong> - Overridden by game, behavior should be almost identical.</li>
+            <li><strong>error</strong> - Overridden by game, behavior should be almost identical.</li>
+        </ul>
+        <h3>io</h3>
+        <p><i>Disabled for security reasons, functionality will eventually be partially restored.</i></p>
+        <h3>os</h3>
+        <p><i>Disabled for security reasons, functionality may eventually be partially restored.</i></p>
+        
+        <h1>Useful Globals</h1>
+        <ul>
+        	<li><span class="client">CLIENT</span> - True when the script is running on the client, false otherwise.</li>
+            <li><span class="server">SERVER</span> - True when the script is running on the server, false otherwise.</li>
+        </ul>
+    </body>
+</html>

@@ -37,6 +37,7 @@ file( GLOB Project_INC_SHADER "${PROJECT_SOURCE_DIR}/_include/shader/*.h" )
 file( GLOB Project_INC_WORLD "${PROJECT_SOURCE_DIR}/_include/world/*.h" )
 file( GLOB Project_INC_WORLD_ENT "${PROJECT_SOURCE_DIR}/_include/world/entities/*.h" )
 file( GLOB Project_INC_WORLD_TERG "${PROJECT_SOURCE_DIR}/_include/world/terraingen/*.h" )
+file( GLOB Project_INC_SCRIPT "${PROJECT_SOURCE_DIR}/_include/script/*.h" )
 
 file( GLOB Project_SRC "${PROJECT_SOURCE_DIR}/*.cpp" )
 file( GLOB Project_SRC_BLOCKS "${PROJECT_SOURCE_DIR}/blocks/*.cpp" )
@@ -45,6 +46,7 @@ file( GLOB Project_SRC_SHADER "${PROJECT_SOURCE_DIR}/shader/*.cpp" )
 file( GLOB Project_SRC_WORLD "${PROJECT_SOURCE_DIR}/world/*.cpp" )
 file( GLOB Project_SRC_WORLD_ENT "${PROJECT_SOURCE_DIR}/world/entities/*.cpp" )
 file( GLOB Project_SRC_WORLD_TERG "${PROJECT_SOURCE_DIR}/world/terraingen/*.cpp" )
+file( GLOB Project_SRC_SCRIPT "${PROJECT_SOURCE_DIR}/script/*.cpp" )
 
 include_directories( "${PROJECT_SOURCE_DIR}/_include" )
 
@@ -54,6 +56,7 @@ source_group( "Header Files\\shader" FILES ${Project_INC_SHADER} )
 source_group( "Header Files\\world" FILES ${Project_INC_WORLD} )
 source_group( "Header Files\\world\\entities" FILES ${Project_INC_WORLD_ENT} )
 source_group( "Header Files\\world\\terraingen" FILES ${Project_INC_WORLD_TERG} )
+source_group( "Header Files\\script" FILES ${Project_INC_SCRIPT} )
 
 source_group( "Source Files\\blocks" FILES ${Project_SRC_BLOCKS} )
 source_group( "Source Files\\interface" FILES ${Project_SRC_INTERFACE} )
@@ -61,6 +64,7 @@ source_group( "Source Files\\shader" FILES ${Project_SRC_SHADER} )
 source_group( "Source Files\\world" FILES ${Project_SRC_WORLD} )
 source_group( "Source Files\\world\\entities" FILES ${Project_SRC_WORLD_ENT} )
 source_group( "Source Files\\world\\terraingen" FILES ${Project_SRC_WORLD_TERG} )
+source_group( "Source Files\\script" FILES ${Project_SRC_SCRIPT} )
 
 # Boost
 set( BOOST_INCLUDE_DIR "NOTBOOST_INCLUDE_DIR-NOTFOUND" CACHE PATH "" )
@@ -80,8 +84,8 @@ endif()
 
 
 add_executable( ${ProjectName} WIN32  
-	${Project_INC} ${Project_INC_BLOCKS} ${Project_INC_INTERFACE} ${Project_INC_SHADER} ${Project_INC_WORLD} ${Project_INC_WORLD_ENT} ${Project_INC_WORLD_TERG}
-	${Project_SRC} ${Project_SRC_BLOCKS} ${Project_SRC_INTERFACE} ${Project_SRC_SHADER} ${Project_SRC_WORLD} ${Project_SRC_WORLD_ENT} ${Project_SRC_WORLD_TERG}  )
+	${Project_INC} ${Project_INC_BLOCKS} ${Project_INC_INTERFACE} ${Project_INC_SHADER} ${Project_INC_WORLD} ${Project_INC_WORLD_ENT} ${Project_INC_WORLD_TERG} ${Project_INC_SCRIPT}
+	${Project_SRC} ${Project_SRC_BLOCKS} ${Project_SRC_INTERFACE} ${Project_SRC_SHADER} ${Project_SRC_WORLD} ${Project_SRC_WORLD_ENT} ${Project_SRC_WORLD_TERG} ${Project_SRC_SCRIPT} )
 
 if( MSVC )
 	set_target_properties( ${ProjectName} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/../bin" )
@@ -92,7 +96,7 @@ if( MSVC )
 	set_target_properties( ${ProjectName} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/../build" )
 	
 	if(${CMAKE_VERSION} VERSION_LESS "3.8.0") 
-		message( "Be sure to change the Debugger Working Directory to point to the build folder!" )
+		message( "Be sure to change the Debugger Working Directory in the generated solution to point to the build folder!" )
 	endif()
 endif()
 

@@ -7,6 +7,7 @@
 #define FILESYSTEM_DIR_SHADER L"data\\shader"
 #define FILESYSTEM_DIR_TEXTURES L"data\\textures"
 #define FILESYSTEM_DIR_FONTS L"data\\fonts"
+#define FILESYSTEM_DIR_SCRIPTS L"data\\scripts"
 
 namespace GameFilesystem
 {

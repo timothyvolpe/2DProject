@@ -25,7 +25,7 @@ void CTerrainGenerator::destroy()
 
 CBlock* CTerrainGenerator::generateBlock( glm::ivec2 chunkPos, glm::ivec2 blockPos )
 {
-	int grassLevel = (m_perlin.octaveNoise( (float)chunkPos.x / 16.0f, 2 ) * 64) + GrassDepth;
+	int grassLevel = (int)((m_perlin.octaveNoise( (float)chunkPos.x / 16.0f, 2 ) * 64) + GrassDepth);
 
 	if( chunkPos.y == SurfaceLevel ) {
 		if( blockPos.y <= grassLevel ) {

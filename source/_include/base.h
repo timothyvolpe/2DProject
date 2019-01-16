@@ -27,7 +27,7 @@
 #define GAME_TITLE L"A 2D Game"
 #define GAME_WINDOW_TITLE "2D Game Project"
 #define GAME_VERSION_MAJ 0
-#define GAME_VERSION_MIN 1
+#define GAME_VERSION_MIN 2
 #define GAME_GLVERSION_MAJ 3
 #define GAME_GLVERSION_MIN 2
 #define GAME_QUICKQUIT true

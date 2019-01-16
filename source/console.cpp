@@ -25,6 +25,12 @@ void CConsole::setColor( unsigned char color )
 	case CONSOLE_COLOR_ERROR:
 		SetConsoleTextAttribute( GetStdHandle( STD_OUTPUT_HANDLE ), FOREGROUND_INTENSITY | FOREGROUND_RED );
 		break;
+	case CONSOLE_COLOR_LUA:
+		SetConsoleTextAttribute( GetStdHandle( STD_OUTPUT_HANDLE ), FOREGROUND_INTENSITY | FOREGROUND_BLUE | FOREGROUND_GREEN );
+		break;
+	case CONSOLE_COLOR_LUA_SERVER:
+		SetConsoleTextAttribute( GetStdHandle( STD_OUTPUT_HANDLE ), FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_BLUE );
+		break;
 	default:
 		break;
 	}

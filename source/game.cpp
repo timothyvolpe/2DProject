@@ -6,6 +6,7 @@
 #include "graphics.h"
 #include "world\world.h"
 #include "interface\interfacemanager.h"
+#include "script\luamanager.h"
 
 const char* GetFreetypeError( FT_Error err )
 {
@@ -28,6 +29,7 @@ CGame::CGame()
 	m_pGraphics = 0;
 	m_pWorld = 0;
 	m_pInterfaceManager = 0;
+	m_pLuaManager = 0;
 
 	m_frameTimeMS = 0.0;
 
@@ -66,7 +68,7 @@ bool CGame::initialize()
 	// Print header
 	PrintInfo( L"\n\t%s\n", GAME_TITLE );
 	PrintInfo( L"\tCreated by Timothy Volpe\n" );
-	PrintInfo( L"\tCopyright 2018 (c)\n" );
+	PrintInfo( L"\tCopyright 2018-2019 (c)\n" );
 	PrintInfo( L"\tVersion %d.%d\n\n", GAME_VERSION_MAJ, GAME_VERSION_MIN );
 
 	// Initialize SDL
@@ -114,10 +116,17 @@ bool CGame::initialize()
 	if( !m_pWorld->initialize() )
 		return false;
 
+	// Initialize Lua
+	m_pLuaManager = new CLuaManager();
+	if( !m_pLuaManager->initialize() )
+		return false;
+
 	return true;
 }
 void CGame::destroy()
 {
+	// Destroy Lua
+	DestroyDelete( m_pLuaManager );
 	// Destroy world
 	DestroyDelete( m_pWorld );
 	// Destroy interface
@@ -138,14 +147,49 @@ void CGame::destroy()
 	DestroyDelete( m_pConsole );
 }
 
+bool CGame::startClient()
+{
+	PrintInfo( L"Starting client...\n" );
+
+	// Register client sided lua scripts
+	if( !m_pLuaManager->registerScript( LUA_CLIENT, "initClient.lua" ) ) {
+		PrintError( L"initClient.lua is missing!\n" );
+		return false;
+	}
+	// Load client sided lua scripts
+	m_pLuaManager->runScripts( LUA_CLIENT );
+
+	return true;
+}
+bool CGame::startServer()
+{
+	PrintInfo( L"Starting server...\n" );
+
+	// Register client sided lua scripts
+	if( !m_pLuaManager->registerScript( LUA_SERVER, "initServer.lua" ) ) {
+		PrintError( L"initServer.lua is missing!\n" );
+		return false;
+	}
+	// Load client sided lua scripts
+	m_pLuaManager->runScripts( LUA_SERVER );
+
+	return true;
+}
 bool CGame::startGame()
 {
+	// Start the client
+	if( !this->startClient() )
+		return false;
+	// Start the server
+	if( !this->startServer() )
+		return false;
 	// Enter the game loop
 	if( !this->gameLoop() )
 		return false;
 
 	return true;
 }
+
 bool CGame::gameLoop()
 {
 	SDL_Event pollEvent;
@@ -222,6 +266,9 @@ CWorld* CGame::getWorld() const {
 }
 CInterfaceManager* CGame::getInterfaceManager() const {
 	return m_pInterfaceManager;
+}
+CLuaManager* CGame::getLuaManager() const {
+	return m_pLuaManager;
 }
 
 FT_Library CGame::getFreeType() {

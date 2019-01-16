@@ -19,6 +19,7 @@ class CInput;
 class CGraphics;
 class CWorld;
 class CInterfaceManager;
+class CLuaManager;
 
 class CGame
 {
@@ -32,6 +33,7 @@ private:
 	CGraphics *m_pGraphics;
 	CWorld *m_pWorld;
 	CInterfaceManager *m_pInterfaceManager;
+	CLuaManager *m_pLuaManager;
 
 	bool m_bRunning;
 
@@ -41,6 +43,8 @@ private:
 	CGame();
 	~CGame();
 
+	bool startClient();
+	bool startServer();
 	bool gameLoop();
 
 	void handleEvent( SDL_Event& pollEvent );
@@ -65,6 +69,7 @@ public:
 	CGraphics* getGraphics() const;
 	CWorld* getWorld() const;
 	CInterfaceManager* getInterfaceManager() const;
+	CLuaManager* getLuaManager() const;
 
 	FT_Library getFreeType();
 
