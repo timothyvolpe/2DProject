@@ -4,7 +4,7 @@
 
 <h3>Installing</h3>
 
-Installation is done through the use of CMake. The appropriate paths must be supplied for the required libraries (see Built With). Additionally the debug working directory must be set correctly in the generate project files. So far it has only been tested Visual Studio Community 2015.
+Installation is done through the use of CMake. The appropriate paths must be supplied for the required libraries (see <a href="https://github.com/timothyvolpe/2DProject#built-with">Built With</a>). Additionally the debug working directory must be set correctly in the generate project files. So far it has only been tested Visual Studio Community 2015.
 
 Currently the game will only run on Windows. 
 
