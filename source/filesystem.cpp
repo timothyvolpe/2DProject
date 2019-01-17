@@ -7,8 +7,7 @@ namespace GameFilesystem
 	{
 		boost::filesystem::path fullPath;
 
-		fullPath = boost::filesystem::current_path();
-		fullPath /= dir;
+		fullPath = dir;
 
 		// Make sure the dir exists, if not create it
 		if( boost::filesystem::exists( fullPath ) ) {
@@ -26,22 +25,33 @@ namespace GameFilesystem
 
 		return true;
 	}
-
 	boost::filesystem::path ConstructPath( boost::filesystem::path relativePath, std::wstring dir )
 	{
 		boost::filesystem::path fullPath;
 
-		fullPath = boost::filesystem::current_path();
-		fullPath /= dir;
+		fullPath = dir;
 		fullPath /= relativePath;
 
 		return fullPath;
 	}
 	bool IsValidFile( boost::filesystem::path fullPath )
 	{
-		if( boost::filesystem::exists( fullPath ) ) {
+		// Check if it existss
+		if( boost::filesystem::exists( fullPath ) )
+		{
+			// Check if it is a regular file
 			if( boost::filesystem::is_regular_file( fullPath ) )
-				return true;
+			{
+				// Make sure it is in the current directory
+				boost::filesystem::path absPath = boost::filesystem::canonical( fullPath );
+				boost::filesystem::path curparent = absPath.parent_path();
+				while( !curparent.empty() ) {
+					if( curparent == boost::filesystem::current_path() )
+						return true;
+					curparent = curparent.parent_path();
+				}
+				return false;
+			}
 			else
 				return false;
 		}

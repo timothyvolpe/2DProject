@@ -35,6 +35,12 @@ int luaf_base_include( lua_State *pState )
 	else
 		fullPath = pFilepath;
 
+	// Verify the path
+	if( !GameFilesystem::IsValidFile( fullPath ) ) {
+		luaL_error( pState, "file %s could not be found\n", fullPath.string().c_str() );
+		return 0;
+	}
+
 	// Clear the stack
 	lua_settop( pState, 0 );
 	// Load and execute the file
