@@ -21,6 +21,12 @@
     </head>
     
     <body>
+    	<h3>Key</h3>
+        <ul>
+        	<li><strong>No Color</strong> - Shared</li>
+            <li><span class="client">Client</span> - Only exposed to the client</li>
+            <li><span class="server">Server</span> - Only exposed to the server</li>
+        </ul>
     	<h1>Default Lua Library Notes</h1>
         <h3>Base</h3>
         <ul>
@@ -32,10 +38,77 @@
         <h3>os</h3>
         <p><i>Disabled for security reasons, functionality may eventually be partially restored.</i></p>
         
-        <h1>Useful Globals</h1>
+        <h1>Useful Global Variables</h1>
         <ul>
         	<li><span class="client">CLIENT</span> - True when the script is running on the client, false otherwise.</li>
             <li><span class="server">SERVER</span> - True when the script is running on the server, false otherwise.</li>
+        </ul>
+        <h1>Global Functions</h1>
+        <ul>
+        	<li><strong>include( <i>path</i> )</strong> - includes a file's contents
+            	<ul>
+                	<li>Arguments: <i>path</i>, the path of the file to include relative to the current file</li>
+                    <li>Returns: <i>ignored</i></li>
+                    <li>Version added: 0.2</li>
+                    <li>Version removed: N/A</li>
+            	</ul>
+            </li>
+        </ul>
+        
+        <h1>Game Class</h1>
+        <h3>User definable functions</h3>
+        <ul>
+        	<li><strong>Initialize( )</strong> - the entry point, called when the game runs the lua file. For the client, this is when the game start; for the server, this is when the server starts the lua loading stage.
+            	<ul>
+                	<li>Arguments: <i>none</i></li>
+                    <li>Returns: <i>ignored</i></li>
+                    <li>Version added: 0.2</li>
+                    <li>Version removed: N/A</li>
+            	</ul>
+            </li>
+        </ul> 
+        <h3>Client-sided functions</h3>
+        <ul>
+        	<li><strong>GetResolution( )</strong> - returns the games current resolution
+            	<ul>
+                	<li>Arguments: <i>none</i></li>
+                    <li>Returns: <i>x, y</i> - Resolution of the game window in pixels</li>
+                    <li>Version added: 0.2</li>
+                    <li>Version removed: N/A</li>
+            	</ul>
+            </li>
+            <li><strong>GetResolutionX( )</strong> - returns the games current resolution in the X dimension
+            	<ul>
+                	<li>Arguments: <i>none</i></li>
+                    <li>Returns: <i>x</i> - X resolution of the game window in pixels</li>
+                    <li>Version added: 0.2</li>
+                    <li>Version removed: N/A</li>
+            	</ul>
+            </li>
+            <li><strong>GetResolutionY( )</strong> - returns the games current resolution in the Y dimension
+            	<ul>
+                	<li>Arguments: <i>none</i></li>
+                    <li>Returns: <i>y</i> - Y resolution of the game window in pixels</li>
+                    <li>Version added: 0.2</li>
+                    <li>Version removed: N/A</li>
+            	</ul>
+            </li>
+            <li><strong>IsFullscreen( )</strong> - returns a boolean describing the fullscreen state of the game
+            	<ul>
+                	<li>Arguments: <i>none</i></li>
+                    <li>Returns: <i>fullscreen</i> - true if fullscreen, false otherwise</li>
+                    <li>Version added: 0.2</li>
+                    <li>Version removed: N/A</li>
+            	</ul>
+            </li>
+            <li><strong>IsBorderless( )</strong> - returns a boolean describing the borderless state of the game. Meaningless when in fullscreen
+            	<ul>
+                	<li>Arguments: <i>none</i></li>
+                    <li>Returns: <i>borderless</i> - true if borderless, false otherwise. Unknown if fullscreen.</li>
+                    <li>Version added: 0.2</li>
+                    <li>Version removed: N/A</li>
+            	</ul>
+            </li>
         </ul>
     </body>
 </html>
