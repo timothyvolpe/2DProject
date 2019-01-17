@@ -2,6 +2,7 @@
 #include "script\luamanager.h"
 #include "script\lua_liboverrides.h"
 #include "script\lua_game.h"
+#include "script\lua_base.h"
 #include <algorithm>
 
 void CLuaManager::HandleLuaError( int error, std::wstring file, lua_State *pState )
@@ -21,6 +22,9 @@ void CLuaManager::HandleLuaError( int error, std::wstring file, lua_State *pStat
 		break;
 	case LUA_ERRRUN:
 		PrintError( L"Lua runtime error: %hs\n", (pState ? lua_tostring( pState, -1 ) : "") );
+		break;
+	case LUA_ERRFILE:
+		PrintError( L"Lua could not open file specified: %hs\n", (pState ? lua_tostring( pState, -1 ) : "") );
 		break;
 	case LUA_OK:
 		break;
@@ -177,8 +181,10 @@ bool CLuaManager::setupScope( int scope, lua_State *pState )
 	lua_pop( pState, 6 );
 
 	// Override certain default lib functions
+	// Also add new global functions
 	lua_getglobal( pState, "_G" );
 	luaL_setfuncs( pState, luaf_liboverrides, 0 );
+	luaL_setfuncs( pState, luaf_base, 0 );
 	lua_pop( pState, 1 );
 
 	// Setup globals
