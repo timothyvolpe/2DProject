@@ -41,6 +41,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 	</li>
 	<li>
 		<strong>distance-field:</strong>
+		<a href="https://github.com/rougier/freetype-gl">freetype-gl</a>
 		<p>Copyright 2011-2016 Nicolas P. Rougier<br/>Copyright 2013-2016 Marcel Metz<br/>All rights reserved.</p>
 	</li>
 </ul>
