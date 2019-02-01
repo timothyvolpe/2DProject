@@ -13,6 +13,7 @@ CInterfaceBase::CInterfaceBase() {
 	m_pParent = 0;
 	m_name = L"";
 	m_layer = LAYER_INTERFACE;
+	m_bActivated = false;
 }
 CInterfaceBase::~CInterfaceBase() {
 }
@@ -32,6 +33,7 @@ void CInterfaceBase::destroy() {
 bool CInterfaceBase::activate() {
 	if( !this->onActivate() )
 		return false;
+	m_bActivated = true;
 	return true;
 }
 

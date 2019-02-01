@@ -58,6 +58,8 @@ bool CInterfaceManager::initialize()
 
 	EndGLDebug();
 
+	// WARN: These are just for testing and are never deleted!
+
 	// Create a test screen
 	CInterfaceScreen *pTestScreen;
 	CInterfacePanel *pTestPanel;
@@ -67,6 +69,7 @@ bool CInterfaceManager::initialize()
 	pTestScreen->initialize( L"DebugScreen" );
 	pTestScreen->setSize( glm::ivec2( 100, 25 ) );
 	pTestScreen->setPosition( glm::ivec2( 200, 0 ) );
+	this->registerControl( pTestScreen );
 	pTestScreen->activate();
 
 	pTestPanel = new CInterfacePanel();
@@ -74,6 +77,7 @@ bool CInterfaceManager::initialize()
 	pTestPanel->setSize( glm::ivec2( 50, 50 ) );
 	pTestPanel->setPosition( glm::ivec2( 10, 0 ) );
 	pTestScreen->addChild( pTestPanel );
+	this->registerControl( pTestPanel );
 	pTestPanel->activate();
 
 	pTestLabel = new CInterfaceLabel();
@@ -81,6 +85,7 @@ bool CInterfaceManager::initialize()
 	pTestLabel->setSize( glm::ivec2( 50, 15 ) );
 	pTestLabel->setPosition( glm::ivec2( 70, 100 ) );
 	pTestScreen->addChild( pTestLabel );
+	this->registerControl( pTestLabel );
 	pTestLabel->activate();
 
 	this->addScreen( pTestScreen );
@@ -194,6 +199,42 @@ bool CInterfaceManager::removeScreen( CInterfaceScreen *pScreen )
 	return true;
 }
 
+bool CInterfaceManager::registerControl( CInterfaceBase *pInterface )
+{
+	assert( pInterface );
+
+	// Check if it's in the map
+	if( m_activeInterfaceControls.find( pInterface->getName() ) != m_activeInterfaceControls.end() ) {
+		PrintWarn( L"Failed to register control because a control with the name \'%s\' already exists!\n", pInterface->getName().c_str() );
+		return false;
+	}
+	m_activeInterfaceControls.insert( std::pair<std::wstring, CInterfaceBase*>( pInterface->getName(), pInterface ) );
+
+	return true;
+}
+bool CInterfaceManager::unregisterControl( CInterfaceBase *pInterface )
+{
+	assert( pInterface );
+
+	// Check if it's in the map
+	auto it = m_activeInterfaceControls.find( pInterface->getName() );
+	if( it == m_activeInterfaceControls.end() ) {
+		PrintWarn( L"Failed to unregister control because a control with the name \'%s\' does not exist!\n", pInterface->getName().c_str() );
+		return false;
+	}
+	m_activeInterfaceControls.erase( it );
+
+	return true;
+}
+CInterfaceBase* CInterfaceManager::getControlByName( std::wstring name )
+{
+	auto it = m_activeInterfaceControls.find( name );
+	if( it == m_activeInterfaceControls.end() )
+		return 0;
+	else
+		return (*it).second;
+}
+
 void CInterfaceManager::drawChildren( glm::mat4 interfaceOrthoMat, std::vector<CInterfaceBase*> children )
 {
 	std::vector<CInterfaceBase*> childsChildren;
@@ -201,13 +242,16 @@ void CInterfaceManager::drawChildren( glm::mat4 interfaceOrthoMat, std::vector<C
 	for( auto it = children.begin(); it != children.end(); it++ )
 	{
 		// Draw the child
-		(*it)->onDraw();
-		// Check if this children also has children, as we need to render those too
-		if( (*it)->isParent() ) {
-			CInterfaceParent *pParent = reinterpret_cast<CInterfaceParent*>((*it));
-			childsChildren = pParent->getChildren();
-			if( childsChildren.size() > 0 )
-				this->drawChildren( interfaceOrthoMat, childsChildren );
+		if( (*it)->isActivated() )
+		{
+			(*it)->onDraw();
+			// Check if this children also has children, as we need to render those too
+			if( (*it)->isParent() ) {
+				CInterfaceParent *pParent = reinterpret_cast<CInterfaceParent*>((*it));
+				childsChildren = pParent->getChildren();
+				if( childsChildren.size() > 0 )
+					this->drawChildren( interfaceOrthoMat, childsChildren );
+			}
 		}
 	}
 }
@@ -222,11 +266,14 @@ void CInterfaceManager::draw( glm::mat4 interfaceOrthoMat )
 	// Draw the quads to the buffer
 	for( auto it = m_activeScreens.begin(); it != m_activeScreens.end(); it++ )
 	{
-		(*it)->onDraw();
+		if( (*it)->isActivated() )
+		{
+			(*it)->onDraw();
 
-		// Draw the screens children
-		children = (*it)->getChildren();
-		this->drawChildren( interfaceOrthoMat, children );
+			// Draw the screens children
+			children = (*it)->getChildren();
+			this->drawChildren( interfaceOrthoMat, children );
+		}
 	}
 
 

@@ -33,6 +33,7 @@ class CInterfaceManager
 {
 private:
 	std::map<std::wstring, CFont*> m_fontMap;
+	std::map<std::wstring, CInterfaceBase*> m_activeInterfaceControls;
 	std::vector<CInterfaceScreen*> m_activeScreens;
 
 	std::vector<InterfaceQuad> m_interfaceQuads;
@@ -57,6 +58,10 @@ public:
 
 	bool addScreen( CInterfaceScreen *pScreen );
 	bool removeScreen( CInterfaceScreen *pScreen );
+
+	bool registerControl( CInterfaceBase *pInterface );
+	bool unregisterControl( CInterfaceBase *pInterface );
+	CInterfaceBase* getControlByName( std::wstring name );
 
 	void drawQuad( InterfaceQuad interfaceQuad );
 

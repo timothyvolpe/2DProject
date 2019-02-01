@@ -12,6 +12,8 @@ private:
 
 	std::wstring m_name;
 	unsigned char m_layer;
+
+	bool m_bActivated;
 protected:
 	glm::ivec2 m_position;
 	glm::ivec2 m_size;
@@ -47,6 +49,7 @@ public:
 	void setParent( CInterfaceParent *pParent, bool notifyParent = true );
 
 	virtual bool isParent() { return false; }
+	bool isActivated() { return m_bActivated; }
 };
 
 class CInterfaceParent : public CInterfaceBase

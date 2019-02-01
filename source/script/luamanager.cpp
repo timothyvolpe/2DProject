@@ -3,6 +3,7 @@
 #include "script\lua_liboverrides.h"
 #include "script\lua_game.h"
 #include "script\lua_base.h"
+#include "script\lua_interface.h"
 #include <algorithm>
 
 void CLuaManager::HandleLuaError( int error, std::wstring file, lua_State *pState )
@@ -38,9 +39,9 @@ void CLuaManager::HandleLuaError( int error, std::wstring file, lua_State *pStat
 }
 void CLuaManager::PrintStack( lua_State *pState )
 {
-	int stackSize = lua_gettop( pState );
-
 	assert( pState );
+
+	int stackSize = lua_gettop( pState );
 
 	PrintInfo( L"Lua Stack:\n" );
 	PrintInfo( L"  Index\tTop\n" );
@@ -205,17 +206,10 @@ bool CLuaManager::setupScope( int scope, lua_State *pState )
 	}
 
 	// Setup Classes
-
 	// Game
-	luaL_newmetatable( pState, "GameMetatable" );
-	luaL_getmetatable( pState, "GameMetatable" );
-	if( scope == LUA_SERVER )
-		luaL_setfuncs( pState, luac_game_metatable_server, 0 );
-	else
-		luaL_setfuncs( pState, luac_game_metatable_client, 0 );
-	luaL_setfuncs( pState, luac_game_metatable_shared, 0 );
-	lua_setglobal( pState, "Game" );
-	lua_pop( pState, 1 );
+	lua_register_game( scope, pState );
+	// Interface
+	lua_register_interface( scope, pState );
 
 	// Clear stack 
 	lua_settop( pState, 0 );

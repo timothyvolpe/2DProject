@@ -60,7 +60,7 @@
         <ul>
         	<li><strong>Initialize( )</strong> - the entry point, called when the game runs the lua file. For the client, this is when the game start; for the server, this is when the server starts the lua loading stage.
             	<ul>
-                	<li>Arguments: <i>none</i></li>
+                	<li>Arguments: none</li>
                     <li>Returns: <i>ignored</i></li>
                     <li>Version added: 0.2</li>
                     <li>Version removed: N/A</li>
@@ -71,7 +71,7 @@
         <ul>
         	<li><strong>GetResolution( )</strong> - returns the games current resolution
             	<ul>
-                	<li>Arguments: <i>none</i></li>
+                	<li>Arguments: none</li>
                     <li>Returns: <i>x, y</i> - Resolution of the game window in pixels</li>
                     <li>Version added: 0.2</li>
                     <li>Version removed: N/A</li>
@@ -79,7 +79,7 @@
             </li>
             <li><strong>GetResolutionX( )</strong> - returns the games current resolution in the X dimension
             	<ul>
-                	<li>Arguments: <i>none</i></li>
+                	<li>Arguments: none</li>
                     <li>Returns: <i>x</i> - X resolution of the game window in pixels</li>
                     <li>Version added: 0.2</li>
                     <li>Version removed: N/A</li>
@@ -87,7 +87,7 @@
             </li>
             <li><strong>GetResolutionY( )</strong> - returns the games current resolution in the Y dimension
             	<ul>
-                	<li>Arguments: <i>none</i></li>
+                	<li>Arguments: none</li>
                     <li>Returns: <i>y</i> - Y resolution of the game window in pixels</li>
                     <li>Version added: 0.2</li>
                     <li>Version removed: N/A</li>
@@ -95,7 +95,7 @@
             </li>
             <li><strong>IsFullscreen( )</strong> - returns a boolean describing the fullscreen state of the game
             	<ul>
-                	<li>Arguments: <i>none</i></li>
+                	<li>Arguments: none</li>
                     <li>Returns: <i>fullscreen</i> - true if fullscreen, false otherwise</li>
                     <li>Version added: 0.2</li>
                     <li>Version removed: N/A</li>
@@ -103,12 +103,41 @@
             </li>
             <li><strong>IsBorderless( )</strong> - returns a boolean describing the borderless state of the game. Meaningless when in fullscreen
             	<ul>
-                	<li>Arguments: <i>none</i></li>
+                	<li>Arguments: none</li>
                     <li>Returns: <i>borderless</i> - true if borderless, false otherwise. Unknown if fullscreen.</li>
                     <li>Version added: 0.2</li>
                     <li>Version removed: N/A</li>
             	</ul>
             </li>
         </ul>
+		<h1><span class="client">Interface Class</span></h1>
+		<h3>Client-sided functions</h3>
+		<ul>
+			<li><strong>Interface.new( <i>type</i>, <i>name</i>, [<i>parent</i>] )</strong> - static, the interface class constructor
+				<ul>
+					<li>Arguments: <i>type</i>, the type of interface control to create, <i>name</i>, the unique name of the interface control, and optionally <i>parent</i> which is the controls parent Interface object</li>
+					<li>Returns: <i>userdata</i> - a userdata type pointing to the class object
+					<li>Version added: 0.2</li>
+					<li>Version removed: N/A</li>
+					<li><p>Valid interface controls are "Label" and "Panel". Case sensitive.</p></li>
+				</ul>
+			</li>
+			<li><strong>Interface.GetControl( <i>name</i> )</strong> - static, gets a control by its name
+				<ul>
+					<li>Arguments: <i>name</i>, the name of the control to get</li>
+					<li>Returns: <i>userdata</i> - a userdata type pointing to the control, or nil if it was not found
+					<li>Version added: 0.2</li>
+					<li>Version removed: N/A</li>
+				</ul>
+			</li>
+			<li><strong>activate()</strong> - activates the interface object, must be called for it to be usable
+				<ul>
+					<li>Arguments: none</li>
+					<li>Returns: <i>success</i> - true if activation false successful, false otherwise</li>
+					<li>Version added: 0.2</li>
+					<li>Version removed: N/A</li>
+				</ul>
+			</li>
+		</ul>
     </body>
 </html>
